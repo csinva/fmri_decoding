@@ -1,11 +1,12 @@
 from decoding.language_generation.config import get_config
 from decoding.language_generation.data import FMRI_dataset
+from decoding.language_generation.model import Decoding_model
 import pickle
 import random
 import numpy as np
 import torch
 import json
-from decoding.language_generation.model import Decoding_model 
+
 import os
 seed = 2021
 random.seed(seed)
@@ -64,7 +65,7 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(seed)
         dataset = dataset_class(input_dataset, args, tokenizer = decoding_model.tokenizer, decoding_model = decoding_model)
         lost_list_baseline = decoding_model.valid(dataset.test_dataset)
-        from post_hoc_evaluate import compare
+        from decoding.language_generation.post_hoc_evaluate import compare
         pairwise_list = [compare(np.array(loss_list[idx]), np.array(lost_list_baseline[idx])) for idx in range(len(lost_list_baseline))]
         print(f"pairwise accuracy:  {np.sum(pairwise_list)/len(lost_list_baseline):.4f}",)
     

@@ -3,6 +3,8 @@ import datetime
 import json
 import os
 import wandb
+path_to_file = os.path.dirname(os.path.abspath(__file__))
+REPO_DIR = os.path.dirname(os.path.dirname(path_to_file))
 
 dataset2args = {
     'Huth':{
@@ -35,7 +37,7 @@ def get_config():
     parser.add_argument('-lr',  type = float, default = 1e-3, required=False)
     parser.add_argument('-dropout',  type = float, default = 0.5, required=False)
     parser.add_argument('-brain_embed_size',  type = float, default = 1000, required=False)
-    parser.add_argument('-checkpoint_path', default = "" ,required=False)
+    parser.add_argument('-checkpoint_path', default = "" ,required=False, help="subdirectory under results_path")
     parser.add_argument('-load_check_point', default = "False" ,required=False)
     parser.add_argument('-enable_grad', default = "False" ,required=False)
     parser.add_argument('-mode', default = "train" , choices = ['train','evaluate', 'all', 'end2end', 'acc', 'only_train'],required=False)
@@ -64,8 +66,8 @@ def get_config():
     parser.add_argument('-pretrain_epochs', default = 0, type=int,required=False)
     parser.add_argument('-pretrain_lr', default = 0.001, type=float,required=False)
     parser.add_argument('-data_size', default = -1, type=int,required=False)
-    parser.add_argument('-results_path', default = 'results', type=str,required=False)
-    parser.add_argument('-dataset_path', default = '../../dataset/', type=str,required=False)
+    parser.add_argument('-results_path', default = os.path.join(REPO_DIR, 'results'), type=str,required=False)
+    parser.add_argument('-dataset_path', default = os.path.join(REPO_DIR, 'dataset'), type=str,required=False)
     parser.add_argument('-shuffle_times', default = -1, type=int,required=False)
     parser.add_argument('-prev_mask_len', default = 32, type=int,required=False)
     parser.add_argument('-max_generate_len', default = 32, type=int,required=False)
@@ -104,17 +106,17 @@ def get_config():
     args['shuffle_times'] = shuffle_times if args['shuffle_times'] == 1 else shuffle_times
     
     # manage checkpoint_path
+
     results_path =  args['results_path']
     if args['checkpoint_path'] == '':
-        args['checkpoint_path'] = f'../{results_path}/tmp'
-    elif f'../{results_path}/' not in args['checkpoint_path']:
-        args['checkpoint_path'] = f'../{results_path}/' + args['checkpoint_path']
-    if os.path.exists(args['checkpoint_path']) == False:
-        os.makedirs(args['checkpoint_path'])
+        args['checkpoint_path'] = os.path.join(results_path, 'tmp')
+    elif results_path not in args['checkpoint_path']:
+        args['checkpoint_path'] = os.path.join(results_path, args['checkpoint_path'])
+    os.makedirs(args['checkpoint_path'], exist_ok=True)
     args["llm_model_path"] = args['checkpoint_path']
-    
-    print(args['checkpoint_path'])
-    
+
+    print('saving to', args['checkpoint_path'])
+
     # write info
     if args['mode'] in ['train', 'all', 'end2end']:
         json.dump(args, open(args['checkpoint_path']+'/info.json', 'w'))

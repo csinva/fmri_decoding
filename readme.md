@@ -3,53 +3,30 @@
 This is the official repo for our paper [Language Generation from Brain Recordings](https://arxiv.org/abs/2311.09889). Language generation from brain recordings is a novel approach that supports direct language generation with BCIs (brain-computer interfaces) without pre-defineng or pre-generating language candidates to select from.
 Code is taken from [Zenodo](https://zenodo.org/records/14838723).
 
-<img src="./figures/model_structure2.jpg" alt="Logo" height="80%">
-
-<p align="left">
-    <a href="https://github.com/YeZiyi1998/Brain-language-generation">
-    <img alt="BCI" src="https://img.shields.io/badge/BCI-Language%20Generation-blueviolet">
-    </a>
-    <a href="https://github.com/YeZiyi1998/Brain-language-generation/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/badge/License-cc_by--nc_4.0-blue.svg">
-    </a>
-    <a>
-    <a href="https://pytorch.org">
-    <img alt="made-with-pytorch" src="https://img.shields.io/badge/Made%20with-Pytorch-red.svg">
-    </a>
-    <a>
-    <a href="https://github.com/YeZiyi1998/Brain-language-generation">
-    <img alt="code-size" src="https://img.shields.io/github/languages/code-size/YeZiyi1998/Brain-language-generation?color=green">
-    </a>
-    <a href="https://github.com/YeZiyi1998/Brain-language-generation">
-    </a>
-</p>
-
 
 ## Quick Start
 We have provided an example dataset to facilitate the replication of experiments. To run the example dataset, you can go into the sub-directory *language_generation/src* and use the following command:
 
-Install depencies with ```uv sync```
+Install / setup with ```uv sync```
 
 ```bash
-cd language_generation
 # model training and evaluation (runing BrainLLM)
-uv run python main.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all
+uv run python experiments/00_language_generation.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all
 # control evaluation (runing PerBrainLLM)
-uv run python main.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -input_method permutated -mode evaluate -output test_permutated
+uv run python experiments/00_language_generation.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -input_method permutated -mode evaluate -output test_permutated
 # control evaluation (runing LLM)
-uv run python main.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -input_method mask_input -mode evaluate -output test_nobrain
+uv run python experiments/00_language_generation.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -input_method mask_input -mode evaluate -output test_nobrain
 ```
 
 To run with [slurm](https://slurm.schedmd.com/documentation.html), you can also use the provided scripts in the sub-directory *language_generation/scripts* (remember to replace the name of conda environment and the path of the sub-directory *language_generation/scripts* according to your settings).
 
-```bash
-sh example.sh
-```
-
-To run with the datasets utilized in our paper, please download the dataset from [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/d/04e8cfe6c9c743c69f08/) and unzip it. Use the parameter *-dataset_path* to specify the path of your unzip dataset.
+To run with the datasets utilized in our paper, please download the dataset from [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/d/04e8cfe6c9c743c69f08/) and unzip it.
+- unzip it to `/path_to_repo/released/` (or wherever you specify in the parameter *-dataset_path*).
+- unpack the files via `gunzip *.gz` in each sub-directory.
+Use the parameter *-dataset_path* to specify the path of your unzip dataset.
 For example, if you unzip the dataset into your home directory as *~/released/*, then you can run the training and evaluation of BrainLLM and the participant 1 in Huth dataset using the following command:
 ```bash
-uv run python main.py -task_name Huth_1 -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path Huth_1 -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all -dataset_path ../../dataset/ -pos True
+uv run python experiments/00_language_generation.py -task_name Huth_1 -cuda 0 -load_check_point False -model_name gpt2 -checkpoint_path Huth_1 -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all -dataset_path /home/chansingh/fmri_decoding/released/ -pos True
 ``` 
 
 To evaluate the model performance, you can refer to the code in *language_generation/src/post_hoc_evaluate.py*
@@ -71,20 +48,6 @@ uv run python main.py -task_name Huth_1 -cuda 0 -load_check_point False -model_n
 # run evaluation with Huth's metrics
 uv run python evaluate.py -dir Huth_1
 ``` 
-
-### Installation
-
-This repo is developed with [PyTorch](https://pytorch.org/get-started/locally/). It can be installed manually according to the requirement of platform-specific custom configuration. The recommended commands for installation are:
-```bash
-# XX.X is a placeholder for cudatoolkit version. It should be specified according to your environment
-conda install pytorch torchvision torchaudio cudatoolkit=XX.X -c pytorch 
-```
-In our experiment, we use torch verison 2.0.1 and cuda verison 11.7.
-In addition to PyTorch, we adopt several publicly available packages, which can be installed by
-```bash
-pip install -r requirements.txt
-```
-Note: Llama-7b may produce NaNs during half-precision training. If you encounter this issue, you can refer to this: [https://github.com/huggingface/transformers/issues/25065](https://github.com/huggingface/transformers/issues/25065).
 
 ### Model Training
 To train the model, you need to special the parameter *-mode* as *training* (only training) or *all* (training and evaluation).

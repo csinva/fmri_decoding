@@ -1,3 +1,4 @@
+import os
 import pickle
 from torch.utils.data import Dataset
 import torch
@@ -6,6 +7,7 @@ import random
 import gc
 import json
 import copy
+from decoding.language_generation.config import REPO_DIR
 class MyStandardScaler:
     def __init__(self):
         self.mean = 0
@@ -177,7 +179,7 @@ class FMRI_dataset():
         elif 'Huth' in args['task_name']:
             dataset_name = args['task_name'].split('_')[0]
             subject_name = args['task_name'].split('_')[1]
-            data_info2 = json.load(open('../../dataset_info/Huth.json'))
+            data_info2 = json.load(open(os.path.join(REPO_DIR, 'dataset', 'dataset_info', 'Huth.json')))
             data_info2random_number = [0.2 * i for i in range(len(data_info2))]
             ds_dataset = pickle.load(open(f'{dataset_path}/{subject_name}.pca1000.wq.pkl.dic','rb'))
             content_true2idx = {}
