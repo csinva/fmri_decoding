@@ -1,19 +1,23 @@
+# E2E baseline
+
+
+
 This is the official repo for our paper [Language Generation from Brain Recordings](https://arxiv.org/abs/2311.09889). Language generation from brain recordings is a novel approach that supports direct language generation with BCIs (brain-computer interfaces) without pre-defineng or pre-generating language candidates to select from.
 Code is taken from [Zenodo](https://zenodo.org/records/14838723).
 
 
-## Quick Start
+### Quick Start
 We have provided an example dataset to facilitate the replication of experiments. To run the example dataset, you can go into the sub-directory *language_generation/src* and use the following command:
 
 Install / setup with ```uv sync```
 
 ```bash
 # model training and evaluation (runing BrainLLM)
-uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --dataset_path /home/chansingh/fmri_decoding/dataset/
+uv run python experiments/e2e_baseline/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --dataset_path /home/chansingh/fmri_decoding/dataset/
 # control evaluation (runing PerBrainLLM)
-uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method permutated --mode evaluate --output test_permutated --dataset_path /home/chansingh/fmri_decoding/dataset/
+uv run python experiments/e2e_baseline/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method permutated --mode evaluate --output test_permutated --dataset_path /home/chansingh/fmri_decoding/dataset/
 # control evaluation (runing LLM)
-uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method mask_input --mode evaluate --output test_nobrain --dataset_path /home/chansingh/fmri_decoding/dataset/
+uv run python experiments/e2e_baseline/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method mask_input --mode evaluate --output test_nobrain --dataset_path /home/chansingh/fmri_decoding/dataset/
 ```
 
 To run with the datasets utilized in our paper, please download the dataset from [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/d/04e8cfe6c9c743c69f08/) and unzip it.
@@ -21,7 +25,8 @@ To run with the datasets utilized in our paper, please download the dataset from
 - unpack the files via `gunzip *.gz` in each sub-directory.
 
 ```bash
-uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1 --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --pos True
+# same command as above except changed --task_name and --dataset_path
+uv run python experiments/e2e_baseline/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1 --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --pos True
 ``` 
 
 To evaluate the model performance, you can refer to the code in *language_generation/src/post_hoc_evaluate.py*
@@ -38,16 +43,16 @@ Here is a example that generate the human semantics while they are perceiving st
 
 ```bash
 # train BrainLLM with the spliting strategy that left out the story of "where there's smoke"
-uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 0 --wandb none --mode all --pos True --data_spliting end2end
+uv run python experiments/e2e_baseline/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 0 --wandb none --mode all --pos True --data_spliting end2end
 
-# run encoding models
-uv run python experiments/01_fit_encoding.py --task_name Huth_1 --checkpoint_path Huth_1_huth_encoding --wandb none --mode all --data_spliting end2end --model huth
+# fit model to predict word timings
+uv run python experiments/e2e_baseline/01_fit_encoding.py --task_name Huth_1 --checkpoint_path Huth_1_huth_encoding --wandb none --mode all --data_spliting end2end --model huth
 
 # run inference for full story construction
-uv run python experiments/02_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
+uv run python experiments/e2e_baseline/02_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
 
 # run evaluation with Huth's metrics
-uv run python experiments/03_e2e_evaluate.py --dir Huth_1_gpt2_e2e
+uv run python experiments/e2e_baseline/03_e2e_evaluate.py --dir Huth_1_gpt2_e2e
 ``` 
 
 ### Model Training
@@ -106,7 +111,7 @@ To evaluate the model with different prompt input, i.e., BrainLLM, PerBrainLLM, 
 After that, you can get output files for different prompt inputs. Then, you can evaluate their performance by runing the python script *language_generation/src/post_hoc_evaluatoion.py* with the path of output files specified.
 Refer to *language_generation/src/post_hoc_evaluatoion.py* for example usage:
 ```bash
-uv run python language_generation/src/post_hoc_evaluatoion.py
+uv run python decoding/language_generation/post_hoc_evaluate.py
 ```
 
 ### Dataset
