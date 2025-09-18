@@ -9,16 +9,10 @@ import json
 import wandb 
 import torch.optim.lr_scheduler as lr_scheduler
 import random
-try:
-    from settings import model_name2path, model2hidden
-    from model_utils import Prompt_model
-    from optimizer import Adam16
-    from GPT import GPT, GPT_Tokenizer
-except:
-    from src.settings import model_name2path, model2hidden
-    from src.model_utils import Prompt_model
-    from src.optimizer import Adam16
-    from src.GPT import GPT, GPT_Tokenizer
+from decoding.language_generation.settings_template import model_name2path, model2hidden
+from decoding.language_generation.model_utils import Prompt_model
+from decoding.language_generation.optimizer import Adam16
+from decoding.language_generation.GPT import GPT, GPT_Tokenizer
     
 class Decoding_model:
     def put_data_into_cuda(self, content_prev,additional_bs, content_prev_sep, content_true, content_prev_mask, content_true_mask, ):

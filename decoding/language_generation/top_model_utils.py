@@ -1,12 +1,8 @@
 import torch
 import numpy as np
 from torch.nn.functional import softmax
-try:
-    from GPT import GPT
-    from modules.config import INIT, STOPWORDS, INIT_ids, STOPWORDS_ids
-except:
-    from src.GPT import GPT
-    from src.modules.config import INIT, STOPWORDS, INIT_ids, STOPWORDS_ids
+from decoding.language_generation.GPT import GPT
+from decoding.language_generation.modules.config import INIT, STOPWORDS, INIT_ids, STOPWORDS_ids
 from nltk.stem.snowball import SnowballStemmer
 stemmer = SnowballStemmer("english")
 

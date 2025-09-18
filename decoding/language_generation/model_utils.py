@@ -1,13 +1,9 @@
 import torch
 import torch.nn as nn
 import random
-try:
-    from top_model_utils import generate_beam
-    from sub_models import Encoding_model 
-except Exception as e:
-    # print(e)
-    from src.top_model_utils import generate_beam
-    from src.sub_models import Encoding_model 
+
+from decoding.language_generation.top_model_utils import generate_beam
+from decoding.language_generation.sub_models import Encoding_model
 
 
 class Prompt_model(nn.Module):

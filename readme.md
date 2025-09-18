@@ -31,7 +31,7 @@ We have provided an example dataset to facilitate the replication of experiments
 Install depencies with ```uv sync```
 
 ```bash
-cd language_generation/src
+cd language_generation
 # model training and evaluation (runing BrainLLM)
 uv run python main.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all
 # control evaluation (runing PerBrainLLM)
