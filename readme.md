@@ -47,7 +47,7 @@ uv run python experiments/01_fit_encoding.py --task_name Huth_1 --checkpoint_pat
 uv run python experiments/02_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
 
 # run evaluation with Huth's metrics
-uv run python experiments/03_e2e_evaluate.py --dir Huth_1
+uv run python experiments/03_e2e_evaluate.py --dir Huth_1_gpt2_e2e
 ``` 
 
 ### Model Training

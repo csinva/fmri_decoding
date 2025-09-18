@@ -141,6 +141,8 @@ dependencies = [
     "websocket-client==1.6.3",
     "widgetsnbextension==4.0.9",
     "torch",
+    "jiwer",
+    "bert-score",
 ]
 
 [build-system]

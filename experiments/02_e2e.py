@@ -61,6 +61,6 @@ if __name__ == '__main__':
         decoding_model.args['load_check_point'] = True
         decoding_model.load_check_point()
         # decoding_model.test(dataset.test_dataset, args['output'])
-        decoding_model.test_beam(dataset.test_dataset, args['output'])
+        decoding_model.test_beam(dataset.test_dataset, file_name='e2e_' + args['output'])
         
 

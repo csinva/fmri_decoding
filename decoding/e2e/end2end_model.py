@@ -128,7 +128,7 @@ class End2End_model(Decoding_model):
             if (data_id == 20 or data_id == 100) and print_half_result:
                 re['result_ids'].append(decoder.beam[0].words)
                 re = convert_int64_to_int(re)
-                json.dump(re, open(self.args['checkpoint_path']+'/'+file_name+f'.{data_id}.json', 'w'))
+                json.dump(re, open(os.path.join(self.args['checkpoint_path'], file_name+f'.{data_id}.json'), 'w'))
                 print(f'save results with top {data_id} steps')
             
             if len(re['content_pred']) > self.args['num_steps']:
@@ -143,4 +143,4 @@ class End2End_model(Decoding_model):
         
         if file_name is not None:
             re = convert_int64_to_int(re)
-            json.dump(re, open(self.args['checkpoint_path']+'/'+file_name+f'.json', 'w'))
+            json.dump(re, open(os.path.join(self.args['checkpoint_path'], file_name+'.json'), 'w'))
