@@ -15,8 +15,7 @@ torch.cuda.manual_seed_all(seed)
 
 if __name__ == '__main__':
     args = get_config()
-    print(args)
-    save_name = os.path.join(REPO_DIR, 'results')
+    save_name = args['results_path']
     for key in args.keys():
         if key not in ['cuda']:
             save_name += key+'('+str(args[key])+')_'

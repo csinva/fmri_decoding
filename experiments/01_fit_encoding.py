@@ -9,10 +9,9 @@ import os
 import json
 import copy
 from sklearn import svm
-sys.path.append('../../language_generation/')
-from src.model import Decoding_model 
-from src.config import get_config
-from src.data import FMRI_dataset
+from decoding.config import get_config, REPO_DIR
+from decoding.language_generation.data import FMRI_dataset
+from decoding.language_generation.model import Decoding_model
 seed = 2021
 random.seed(seed)
 np.random.seed(seed)
@@ -27,7 +26,7 @@ def dataset2xy(dataset):
 if __name__ == '__main__':
     args = get_config()
     print(args)
-    save_name = '../results/'
+    save_name = args['results_path']
     for key in args.keys():
         if key not in ['cuda']:
             save_name += key+'('+str(args[key])+')_'
@@ -48,7 +47,7 @@ if __name__ == '__main__':
         decoding_model = Decoding_model(args)
         dataset = dataset_class(input_dataset, args, tokenizer = decoding_model.tokenizer, decoding_model = decoding_model)
     elif 'Narratives' in args['task_name']:
-        u2s = json.load(open(f'../../dataset_info/u2s.json'))
+        u2s = json.load(open(os.path.join(REPO_DIR, 'dataset/dataset_info/u2s.json')))
         args['Narratives_stories'] = u2s[f'sub-{subject_name}']
         input_dataset = {}
         for story_name in args['Narratives_stories']:
@@ -71,10 +70,10 @@ if __name__ == '__main__':
     model_ridge.fit(X_train, y_train)
     
     # # 保存模型
-    mode_path = f'{args["checkpoint_path"]}/model.pkl'
-    joblib.dump(model_ridge, mode_path)
+    model_path_ = f'{args["checkpoint_path"]}/model.pkl'
+    joblib.dump(model_ridge, model_path_)
     
-    model_ridge = joblib.load(mode_path)
+    model_ridge = joblib.load(model_path_)
     
     # 使用模型进行预测
     y_predict = model_ridge.predict(X_test)

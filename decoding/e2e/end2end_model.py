@@ -14,8 +14,9 @@ import sys
 import math
 import sklearn
 import numpy as np
+from os.path import join
 from decoding.e2e.Decoder import Decoder, Hypothesis
-from decoding.language_generation.settings_template import model_name2path, model2hidden
+from decoding.config import model_name2path, model2hidden, BIG_DATA_DIR
 from decoding.language_generation.model_utils import Prompt_model
 from decoding.language_generation.model import Decoding_model
 from decoding.language_generation.top_model_utils import LanguageModel, Top_model, TokenLanguageModel
@@ -38,11 +39,12 @@ class End2End_model(Decoding_model):
         if self.args['use_decoder_vocab'] == False:
             decoder_vocab = None
         else:
-            decoder_vocab = json.load(open(f'../../data_lm/decoder_vocab.{args["model_name"]}.json', "r"))
+            decoder_vocab = json.load(open(join(BIG_DATA_DIR, f'data_lm/decoder_vocab.json'), "r"))
+            # decoder_vocab = json.load(open(join(BIG_DATA_DIR, f'data_lm/decoder_vocab.{args["model_name"]}.json', "r")))
         self.top_model = Top_model(self.model, self.tokenizer, device = self.device, prompt_model = self.prompt_model)
         self.top_model.prompt_model = self.prompt_model
         self.decoder = Decoder(beam_width=self.args['beam_width'], extensions=self.args['extensions'])
-        if self.args['model_name'] in ['llama-7b','gpt2-xl']: #  or 'gpt' in self.args['model_name'] gpt with old tokenizer?
+        if self.args['model_name'] in ['llama-7b', 'gpt2-xl']: #  or 'gpt' in self.args['model_name'] gpt with old tokenizer?
             self.lm = TokenLanguageModel(self.top_model, decoder_vocab, model_name=self.args['model_name'],  task_name = self.args['task_name'])
             self.token_based = False
         else:
@@ -88,7 +90,7 @@ class End2End_model(Decoding_model):
         re = {'beam_list':[], 'result':[],'data_id':[], 'content_true':[], 'content_pred':[], 'word_rate':[], 'result_ids':[], 'word_rate_float':[], 'content_pred_ids':[]}
         decoder = self.decoder
         
-        print('startting end to end generation:')
+        print('starting end to end generation:')
         
         for content_prev, additional_bs, content_prev_sep, content_true, content_prev_mask, content_true_mask, content_all, content_all_mask, data_id in tqdm.tqdm(test_dataloader, mininterval=300):
             # estimate word rate

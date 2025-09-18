@@ -9,7 +9,7 @@ import json
 import wandb 
 import torch.optim.lr_scheduler as lr_scheduler
 import random
-from decoding.language_generation.settings_template import model_name2path, model2hidden
+from decoding.config import model_name2path, model2hidden
 from decoding.language_generation.model_utils import Prompt_model
 from decoding.language_generation.optimizer import Adam16
 from decoding.language_generation.GPT import GPT, GPT_Tokenizer

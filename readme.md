@@ -30,17 +30,24 @@ To evaluate the model performance, you can refer to the code in *language_genera
 
 In addition to the language completion task, our method also supports generating a complete piece of text based on brain signals spanning a few minutes. The relevant code can be found in the directory of *end2end_generation/*. 
 The implementation of full story construction is based on [Tang et al.](https://github.com/HuthLab/semantic-decoding) (thanks for their code).
-To run this code, you also need to download some helpful files from their code, i.e., the *data_lm* directory and transform the vocabulary of their implementation into the vocabulary of Llama-2 or GPT-2 series models.
-- this splitting is specificied via --data_spliting end2end
+To run this code, you also need to download some helpful files from their code, i.e., the *data_lm* directory.
+- set the appropriate paths in config to point to this directory.
+- data splitting is specificied via --data_spliting end2end
+
 Here is a example that generate the human semantics while they are perceiving story of "where there's smoke":
 
 ```bash
 # train BrainLLM with the spliting strategy that left out the story of "where there's smoke"
 uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 0 --wandb none --mode all --pos True --data_spliting end2end
+
+# run encoding models
+uv run python experiments/01_fit_encoding.py --task_name Huth_1 --checkpoint_path Huth_1_huth_encoding --wandb none --mode all --data_spliting end2end --model huth
+
 # run inference for full story construction
-uv run python experiments/01_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
+uv run python experiments/02_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
+
 # run evaluation with Huth's metrics
-uv run python experiments/02_e2e_evaluate.py --dir Huth_1
+uv run python experiments/03_e2e_evaluate.py --dir Huth_1
 ``` 
 
 ### Model Training

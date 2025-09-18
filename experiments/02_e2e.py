@@ -19,7 +19,7 @@ torch.cuda.manual_seed_all(seed)
 if __name__ == '__main__':
     args = get_config()
     print(args)
-    save_name = os.path.join(REPO_DIR, 'results')
+    save_name = args['results_path']
     for key in args.keys():
         if key not in ['cuda']:
             save_name += key+'('+str(args[key])+')_'
@@ -33,8 +33,10 @@ if __name__ == '__main__':
     # setup model path
     args['llm_model_path'] = args['checkpoint_path']
     args['word_rate_model_path'] = os.path.join(
-        REPO_DIR,
-        f'word_rate/results/{args["task_name"]}_{args["model_name"]}') # only use huth model for word rate
+        # REPO_DIR,
+        # f'word_rate/results/{args["task_name"]}_{args["model_name"]}') # only use huth model for word rate
+        args['results_path'],
+        f'{args["task_name"]}_huth_encoding') # only use huth model for word rate
     
     if 'Huth' in args['task_name']:
         input_dataset = pickle.load(open(f'{dataset_path}/{subject_name}.wq.pkl','rb'))
