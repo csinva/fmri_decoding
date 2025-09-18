@@ -6,11 +6,10 @@ import pickle
 import os
 import json
 import copy
-from end2end_model import End2End_model
+from decoding.e2e.end2end_model import End2End_model
 import sys
-sys.path.append('../../language_generation/src/')
-from config import get_config
-from data import FMRI_dataset
+from decoding.config import get_config, REPO_DIR
+from decoding.language_generation.data import FMRI_dataset
 seed = 2021
 random.seed(seed)
 np.random.seed(seed)
@@ -20,7 +19,7 @@ torch.cuda.manual_seed_all(seed)
 if __name__ == '__main__':
     args = get_config()
     print(args)
-    save_name = '../results/'
+    save_name = os.path.join(REPO_DIR, 'results')
     for key in args.keys():
         if key not in ['cuda']:
             save_name += key+'('+str(args[key])+')_'
@@ -32,8 +31,10 @@ if __name__ == '__main__':
         args['dataset_path'] = os.path.join(args['dataset_path'], dataset_name)
     dataset_path = args['dataset_path']
     # setup model path
-    args['llm_model_path'] = '../../language_generation/' + '/'.join(args['checkpoint_path'].split('/')[1:])
-    args['word_rate_model_path'] = f'../../word_rate/results/{args["task_name"]}_{args["model_name"]}' # only use huth model for word rate
+    args['llm_model_path'] = args['checkpoint_path']
+    args['word_rate_model_path'] = os.path.join(
+        REPO_DIR,
+        f'word_rate/results/{args["task_name"]}_{args["model_name"]}') # only use huth model for word rate
     
     if 'Huth' in args['task_name']:
         input_dataset = pickle.load(open(f'{dataset_path}/{subject_name}.wq.pkl','rb'))
@@ -44,7 +45,7 @@ if __name__ == '__main__':
         decoding_model = End2End_model(args)
         dataset = dataset_class(input_dataset, args, tokenizer = decoding_model.tokenizer, decoding_model = decoding_model)
     elif 'Narratives' in args['task_name']:
-        u2s = json.load(open(f'../../dataset_info/u2s.json'))
+        u2s = json.load(open(os.path.join(REPO_DIR, 'dataset_info', 'u2s.json')))
         args['Narratives_stories'] = u2s[f'sub-{subject_name}']
         input_dataset = {}
         for story_name in args['Narratives_stories']:

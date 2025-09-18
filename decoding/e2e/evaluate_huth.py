@@ -1,7 +1,4 @@
-try:
-    from utils_eval import WER, BLEU, METEOR
-except:
-    from src.utils_eval import WER, BLEU, METEOR
+from decoding.e2e.utils_eval import WER, BLEU, METEOR
 import nltk
 import json
 import copy

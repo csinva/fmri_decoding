@@ -14,12 +14,11 @@ import sys
 import math
 import sklearn
 import numpy as np
-from Decoder import Decoder, Hypothesis
-sys.path.append('../../language_generation/')
-from src.settings import model_name2path, model2hidden
-from src.model_utils import Prompt_model
-from src.model import Decoding_model
-from src.top_model_utils import LanguageModel, Top_model, TokenLanguageModel
+from decoding.e2e.Decoder import Decoder, Hypothesis
+from decoding.language_generation.settings_template import model_name2path, model2hidden
+from decoding.language_generation.model_utils import Prompt_model
+from decoding.language_generation.model import Decoding_model
+from decoding.language_generation.top_model_utils import LanguageModel, Top_model, TokenLanguageModel
 
 def convert_int64_to_int(data):
     if isinstance(data, dict):

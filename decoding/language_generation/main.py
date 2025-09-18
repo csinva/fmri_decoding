@@ -1,4 +1,4 @@
-from config import get_config
+from decoding.config import get_config
 from data import FMRI_dataset
 import pickle
 import random

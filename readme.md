@@ -1,5 +1,3 @@
-# Language Generation from Brain Recordings
-
 This is the official repo for our paper [Language Generation from Brain Recordings](https://arxiv.org/abs/2311.09889). Language generation from brain recordings is a novel approach that supports direct language generation with BCIs (brain-computer interfaces) without pre-defineng or pre-generating language candidates to select from.
 Code is taken from [Zenodo](https://zenodo.org/records/14838723).
 
@@ -11,42 +9,38 @@ Install / setup with ```uv sync```
 
 ```bash
 # model training and evaluation (runing BrainLLM)
-uv run python experiments/00_language_generation.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all
+uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --dataset_path /home/chansingh/fmri_decoding/dataset/
 # control evaluation (runing PerBrainLLM)
-uv run python experiments/00_language_generation.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -input_method permutated -mode evaluate -output test_permutated
+uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method permutated --mode evaluate --output test_permutated --dataset_path /home/chansingh/fmri_decoding/dataset/
 # control evaluation (runing LLM)
-uv run python experiments/00_language_generation.py -task_name Pereira_example -cuda 0 -load_check_point False -model_name llama-7b -checkpoint_path example -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -input_method mask_input -mode evaluate -output test_nobrain
+uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method mask_input --mode evaluate --output test_nobrain --dataset_path /home/chansingh/fmri_decoding/dataset/
 ```
-
-To run with [slurm](https://slurm.schedmd.com/documentation.html), you can also use the provided scripts in the sub-directory *language_generation/scripts* (remember to replace the name of conda environment and the path of the sub-directory *language_generation/scripts* according to your settings).
 
 To run with the datasets utilized in our paper, please download the dataset from [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/d/04e8cfe6c9c743c69f08/) and unzip it.
 - unzip it to `/path_to_repo/released/` (or wherever you specify in the parameter *-dataset_path*).
 - unpack the files via `gunzip *.gz` in each sub-directory.
-Use the parameter *-dataset_path* to specify the path of your unzip dataset.
-For example, if you unzip the dataset into your home directory as *~/released/*, then you can run the training and evaluation of BrainLLM and the participant 1 in Huth dataset using the following command:
+
 ```bash
-uv run python experiments/00_language_generation.py -task_name Huth_1 -cuda 0 -load_check_point False -model_name gpt2 -checkpoint_path Huth_1 -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 10 -wandb none -mode all -dataset_path /home/chansingh/fmri_decoding/released/ -pos True
+uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1 --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --pos True
 ``` 
 
 To evaluate the model performance, you can refer to the code in *language_generation/src/post_hoc_evaluate.py*
 
-## Full-text construction
+## Full-text construction (e2e)
 
 In addition to the language completion task, our method also supports generating a complete piece of text based on brain signals spanning a few minutes. The relevant code can be found in the directory of *end2end_generation/*. 
 The implementation of full story construction is based on [Tang et al.](https://github.com/HuthLab/semantic-decoding) (thanks for their code).
 To run this code, you also need to download some helpful files from their code, i.e., the *data_lm* directory and transform the vocabulary of their implementation into the vocabulary of Llama-2 or GPT-2 series models.
+- this splitting is specificied via --data_spliting end2end
 Here is a example that generate the human semantics while they are perceiving story of "where there's smoke":
 
 ```bash
-cd language_generation/src
 # train BrainLLM with the spliting strategy that left out the story of "where there's smoke"
-uv run python main.py -task_name Huth_1 -cuda 0 -load_check_point False -model_name gpt2-xl -checkpoint_path Huth_1_gpt2-xl -batch_size 8 -lr 1e-4 -pos False -pretrain_lr 1e-3 -pretrain_epochs 0 -wandb none -mode all -dataset_path ../../dataset/ -pos True -data_spliting end2end
-cd ../end2end_generation/src
+uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 0 --wandb none --mode all --pos True --data_spliting end2end
 # run inference for full story construction
-uv run python main.py -task_name Huth_1 -cuda 0 -load_check_point False -model_name gpt2-xl -checkpoint_path Huth_1_gpt2-xl -wandb none -mode evaluate -pos True -data_spliting end2end -mode end2end -use_bad_words_ids False -ncontext 10 -gcontext 10 -length_penalty 0.3 -beam_width 3 -extensions 3
+uv run python experiments/01_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
 # run evaluation with Huth's metrics
-uv run python evaluate.py -dir Huth_1
+uv run python experiments/02_e2e_evaluate.py --dir Huth_1
 ``` 
 
 ### Model Training

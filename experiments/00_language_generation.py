@@ -1,4 +1,4 @@
-from decoding.language_generation.config import get_config
+from decoding.config import get_config, REPO_DIR
 from decoding.language_generation.data import FMRI_dataset
 from decoding.language_generation.model import Decoding_model
 import pickle
@@ -6,7 +6,6 @@ import random
 import numpy as np
 import torch
 import json
-
 import os
 seed = 2021
 random.seed(seed)
@@ -17,7 +16,7 @@ torch.cuda.manual_seed_all(seed)
 if __name__ == '__main__':
     args = get_config()
     print(args)
-    save_name = '../results/'
+    save_name = os.path.join(REPO_DIR, 'results')
     for key in args.keys():
         if key not in ['cuda']:
             save_name += key+'('+str(args[key])+')_'
@@ -38,7 +37,7 @@ if __name__ == '__main__':
         decoding_model = Decoding_model(args)
         dataset = dataset_class(input_dataset, args, tokenizer = decoding_model.tokenizer, decoding_model = decoding_model)
     elif 'Narratives' in args['task_name']:
-        u2s = json.load(open(f'../../dataset_info/u2s.json'))
+        u2s = json.load(open(os.path.join(REPO_DIR, 'dataset', 'dataset_info', 'u2s.json')))
         args['Narratives_stories'] = u2s[f'sub-{subject_name}']
         input_dataset = {}
         for story_name in args['Narratives_stories']:

@@ -7,7 +7,7 @@ import random
 import gc
 import json
 import copy
-from decoding.language_generation.config import REPO_DIR
+from decoding.config import REPO_DIR
 class MyStandardScaler:
     def __init__(self):
         self.mean = 0
