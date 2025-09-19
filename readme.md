@@ -5,7 +5,7 @@ This repository contains code used in the paper "Semantic reconstruction of cont
 ## Usage
 
 1. Download [language model data](https://utexas.box.com/shared/static/7ab8qm5e3i0vfsku0ee4dc6hzgeg7nyh.zip) and extract contents into new `data_lm/` directory. 
-- Check all relevant paths in `decoding.tang.config.py`
+- Set all relevant paths in `decoding.tang.config.py`
 
 2. Download [training data](https://utexas.box.com/shared/static/3go1g4gcdar2cntjit2knz5jwr3mvxwe.zip) and extract contents into new `data_train/` directory. Stimulus data for `train_stimulus/` and response data for `train_response/[SUBJECT_ID]` can be downloaded from [OpenNeuro](https://openneuro.org/datasets/ds003020/).
 
