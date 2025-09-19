@@ -2,34 +2,43 @@ import os
 import numpy as np
 import json
 import argparse
+
+from tqdm import tqdm
 import h5py
 from pathlib import Path
 
-import config
-from GPT import GPT
-from Decoder import Decoder, Hypothesis
-from LanguageModel import LanguageModel
-from EncodingModel import EncodingModel
-from StimulusModel import StimulusModel, get_lanczos_mat, affected_trs, LMFeatures
-from utils_stim import predict_word_rate, predict_word_times
+from decoding.tang import config
+from decoding.tang.GPT import GPT
+from decoding.tang.Decoder import Decoder, Hypothesis
+from decoding.tang.LanguageModel import LanguageModel
+from decoding.tang.EncodingModel import EncodingModel
+from decoding.tang.StimulusModel import StimulusModel, get_lanczos_mat, affected_trs, LMFeatures
+from decoding.tang.utils_stim import predict_word_rate, predict_word_times
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subject", type = str, required = True)
-    parser.add_argument("--experiment", type = str, required = True)
-    parser.add_argument("--task", type = str, required = True)
+    parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
+    parser.add_argument("--experiment", type = str, default='perceived_speech')
+    parser.add_argument("--task", type = str, default='wheretheressmoke')
     args = parser.parse_args()
     
     # determine GPT checkpoint based on experiment
-    if args.experiment in ["imagined_speech"]: gpt_checkpoint = "imagined"
-    else: gpt_checkpoint = "perceived"
+    if args.experiment in ["imagined_speech"]:
+        gpt_checkpoint = "imagined"
+    else:
+        gpt_checkpoint = "perceived"
 
     # determine word rate model voxels based on experiment
-    if args.experiment in ["imagined_speech", "perceived_movies"]: word_rate_voxels = "speech"
-    else: word_rate_voxels = "auditory"
+    if args.experiment in ["imagined_speech", "perceived_movies"]:
+        word_rate_voxels = "speech"
+    else:
+        word_rate_voxels = "auditory"
 
     # load responses
-    hf = h5py.File(os.path.join(config.DATA_TEST_DIR, "test_response", args.subject, args.experiment, args.task + ".hf5"), "r")
+    # hf = h5py.File(os.path.join(config.DATA_TEST_DIR, "test_response", args.subject, args.experiment, args.task + ".hf5"), "r")
+    hf = h5py.File(os.path.join(
+        config.DATA_PATH_TO_DERIVATIVE_DS004510, 'preprocessed_data',
+        config.map_to_uts_subject(args.subject), args.experiment, args.task + ".hf5"), "r")
     resp = np.nan_to_num(hf["data"][:])
     hf.close()
     
@@ -56,14 +65,17 @@ if __name__ == "__main__":
     
     # predict word times
     word_rate = predict_word_rate(resp, word_rate_model["weights"], word_rate_model["voxels"], word_rate_model["mean_rate"])
-    if args.experiment == "perceived_speech": word_times, tr_times = predict_word_times(word_rate, resp, starttime = -10)
-    else: word_times, tr_times = predict_word_times(word_rate, resp, starttime = 0)
+    if args.experiment == "perceived_speech":
+        word_times, tr_times = predict_word_times(word_rate, resp, starttime = -10)
+    else:
+        word_times, tr_times = predict_word_times(word_rate, resp, starttime = 0)
     lanczos_mat = get_lanczos_mat(word_times, tr_times)
 
     # decode responses
+    print('decoding...')
     decoder = Decoder(word_times, config.WIDTH)
     sm = StimulusModel(lanczos_mat, tr_stats, word_stats[0], device = config.SM_DEVICE)
-    for sample_index in range(len(word_times)):
+    for sample_index in tqdm(range(len(word_times))):
         trs = affected_trs(decoder.first_difference(), sample_index, lanczos_mat)
         ncontext = decoder.time_window(sample_index, config.LM_TIME, floor = 5)
         beam_nucs = lm.beam_propose(decoder.beam, ncontext)
@@ -78,7 +90,10 @@ if __name__ == "__main__":
             decoder.add_extensions(local_extensions, likelihoods, nextensions)
         decoder.extend(verbose = False)
         
-    if args.experiment in ["perceived_movie", "perceived_multispeaker"]: decoder.word_times += 10
+    print('saving...')
+    if args.experiment in ["perceived_movie", "perceived_multispeaker"]:
+        decoder.word_times += 10
     save_location = os.path.join(config.RESULT_DIR, args.subject, args.experiment)
     os.makedirs(save_location, exist_ok = True)
     decoder.save(os.path.join(save_location, args.task))
+    print('done!')

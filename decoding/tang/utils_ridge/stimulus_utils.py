@@ -1,11 +1,12 @@
 import os
 import numpy as np
 from os.path import join, dirname
+from decoding.tang.config import DATA_PATH_TO_DERIVATIVE_DS003020
+from decoding.tang.utils_ridge.textgrid import TextGrid
 
-from utils_ridge.textgrid import TextGrid
-
-def load_textgrids(stories, data_dir: str):
-    base = join(data_dir, "train_stimulus")
+def load_textgrids(stories):
+    # base = join(data_dir, "train_stimulus")
+    base = join(DATA_PATH_TO_DERIVATIVE_DS003020, 'TextGrids')
     grids = {}
     for story in stories:
         grid_path = os.path.join(base, "%s.TextGrid" % story)

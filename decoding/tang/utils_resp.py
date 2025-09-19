@@ -2,12 +2,12 @@ import os
 import numpy as np
 import h5py
 
-import config
+from decoding.tang import config
 
 def get_resp(subject, stories, stack = True, vox = None):
     """loads response data
     """
-    subject_dir = os.path.join(config.DATA_TRAIN_DIR, "train_response", subject)
+    subject_dir = os.path.join(config.DATA_PATH_TO_DERIVATIVE_DS003020, 'preprocessed_data', config.map_to_uts_subject(subject))
     resp = {}
     for story in stories:
         resp_path = os.path.join(subject_dir, "%s.hf5" % story)
@@ -16,5 +16,7 @@ def get_resp(subject, stories, stack = True, vox = None):
         if vox is not None:
             resp[story] = resp[story][:, vox]
         hf.close()
-    if stack: return np.vstack([resp[story] for story in stories]) 
-    else: return resp
+    if stack:
+        return np.vstack([resp[story] for story in stories]) 
+    else:
+        return resp

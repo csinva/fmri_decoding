@@ -3,17 +3,21 @@ import numpy as np
 import json
 import argparse
 
-import config
-from utils_stim import get_story_wordseqs
-from utils_resp import get_resp
-from utils_ridge.DataSequence import DataSequence
-from utils_ridge.util import make_delayed
-from utils_ridge.ridge import bootstrap_ridge
+
+from decoding.tang.GPT import GPT
+from decoding.tang.StimulusModel import LMFeatures
+from decoding.tang.utils_stim import get_stim
+from decoding.tang.utils_resp import get_resp
+from decoding.tang.utils_ridge.ridge import ridge, bootstrap_ridge
+from decoding.tang import config
+from decoding.tang.utils_stim import get_story_wordseqs
+from decoding.tang.utils_ridge.DataSequence import DataSequence
+from decoding.tang.utils_ridge.util import make_delayed
 np.random.seed(42)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subject", type = str, required = True)
+    parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
     parser.add_argument("--sessions", nargs = "+", type = int, 
         default = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 20])
     args = parser.parse_args()

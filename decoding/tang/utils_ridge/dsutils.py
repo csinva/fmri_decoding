@@ -1,6 +1,6 @@
 import numpy as np
 import itertools as itools
-from utils_ridge.DataSequence import DataSequence
+from decoding.tang.utils_ridge.DataSequence import DataSequence
 
 DEFAULT_BAD_WORDS = frozenset(["sentence_start", "sentence_end", "br", "lg", "ls", "ns", "sp"])
 

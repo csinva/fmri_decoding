@@ -3,14 +3,14 @@ import numpy as np
 import json
 import argparse
 
-import config
-from utils_eval import generate_null, load_transcript, windows, segment_data, WER, BLEU, METEOR, BERTSCORE
+from decoding.tang import config
+from decoding.tang.utils_eval import generate_null, load_transcript, windows, segment_data, WER, BLEU, METEOR, BERTSCORE
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subject", type = str, required = True)
-    parser.add_argument("--experiment", type = str, required = True)
-    parser.add_argument("--task", type = str, required = True)
+    parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
+    parser.add_argument("--experiment", type = str, default='perceived_speech')
+    parser.add_argument("--task", type = str, default='wheretheressmoke')
     parser.add_argument("--metrics", nargs = "+", type = str, default = ["WER", "BLEU", "METEOR", "BERT"])
     parser.add_argument("--references", nargs = "+", type = str, default = [])
     parser.add_argument("--null", type = int, default = 10)
@@ -38,10 +38,14 @@ if __name__ == "__main__":
     pred_words, pred_times = pred_data["words"], pred_data["times"]
 
     # generate null sequences
-    if args.experiment in ["imagined_speech"]: gpt_checkpoint = "imagined"
-    else: gpt_checkpoint = "perceived"
+    print('generating null sequences...')
+    if args.experiment in ["imagined_speech"]:
+        gpt_checkpoint = "imagined"
+    else:
+        gpt_checkpoint = "perceived"
     null_word_list = generate_null(pred_times, gpt_checkpoint, args.null)
         
+    print('scoring...')
     window_scores, window_zscores = {}, {}
     story_scores, story_zscores = {}, {}
     for reference in args.references:
@@ -59,22 +63,27 @@ if __name__ == "__main__":
         for mname, metric in metrics.items():
 
             # get null score for each window and the entire story
+            print('get null score...')
             window_null_scores = np.array([metric.score(ref = ref_windows, pred = null_windows) 
                                            for null_windows in null_window_list])
             story_null_scores = window_null_scores.mean(1)
 
             # get raw score and normalized score for each window
+            print('get raw windowed score...')
             window_scores[(reference, mname)] = metric.score(ref = ref_windows, pred = pred_windows)
             window_zscores[(reference, mname)] = (window_scores[(reference, mname)] 
                                                   - window_null_scores.mean(0)) / window_null_scores.std(0)
 
             # get raw score and normalized score for the entire story
+            print('get raw story score...')
             story_scores[(reference, mname)] = metric.score(ref = ref_windows, pred = pred_windows)
             story_zscores[(reference, mname)] = (story_scores[(reference, mname)].mean()
                                                  - story_null_scores.mean()) / story_null_scores.std()
     
-    save_location = os.path.join(config.REPO_DIR, "scores", args.subject, args.experiment)
+    print('saving...')
+    save_location = os.path.join(config.SCORE_DIR, args.subject, args.experiment)
     os.makedirs(save_location, exist_ok = True)
     np.savez(os.path.join(save_location, args.task), 
              window_scores = window_scores, window_zscores = window_zscores, 
              story_scores = story_scores, story_zscores = story_zscores)
+    print('done!')

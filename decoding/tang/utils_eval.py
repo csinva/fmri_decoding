@@ -2,23 +2,30 @@ import os
 import numpy as np
 import json
 
-import config
-from GPT import GPT
-from Decoder import Decoder, Hypothesis
-from LanguageModel import LanguageModel
+from tqdm import tqdm
+
+from decoding.tang import config
+from decoding.tang.GPT import GPT
+from decoding.tang.Decoder import Decoder, Hypothesis
+from decoding.tang.LanguageModel import LanguageModel
 
 from jiwer import wer
 from datasets import load_metric
 from bert_score import BERTScorer
+from decoding.tang.utils_ridge.textgrid import TextGrid
+from decoding.tang.config import DATA_PATH_TO_DERIVATIVE_DS004510
 
 BAD_WORDS_PERCEIVED_SPEECH = frozenset(["sentence_start", "sentence_end", "br", "lg", "ls", "ns", "sp"])
 BAD_WORDS_OTHER_TASKS = frozenset(["", "sp", "uh"])
 
-from utils_ridge.textgrid import TextGrid
+
 def load_transcript(experiment, task):
-    if experiment in ["perceived_speech", "perceived_multispeaker"]: skip_words = BAD_WORDS_PERCEIVED_SPEECH
-    else: skip_words = BAD_WORDS_OTHER_TASKS
-    grid_path = os.path.join(config.DATA_TEST_DIR, "test_stimulus", experiment, task.split("_")[0] + ".TextGrid")
+    if experiment in ["perceived_speech", "perceived_multispeaker"]:
+        skip_words = BAD_WORDS_PERCEIVED_SPEECH
+    else:
+        skip_words = BAD_WORDS_OTHER_TASKS
+    # grid_path = os.path.join(config.DATA_TEST_DIR, "test_stimulus", experiment, task.split("_")[0] + ".TextGrid")
+    grid_path = os.path.join(DATA_PATH_TO_DERIVATIVE_DS004510, 'TextGrids', experiment, task.split("_")[0] + ".TextGrid")
     transcript_data = {}
     with open(grid_path) as f: 
         grid = TextGrid(f.read())
@@ -52,7 +59,7 @@ def generate_null(pred_times, gpt_checkpoint, n):
     
     # generate null sequences
     null_words = []
-    for _count in range(n):
+    for _count in tqdm(range(n)):
         decoder = Decoder(pred_times, 2 * config.EXTENSIONS)
         for sample_index in range(len(pred_times)):
             ncontext = decoder.time_window(sample_index, config.LM_TIME, floor = 5)
@@ -79,10 +86,14 @@ class WER(object):
     def score(self, ref, pred):
         scores = []
         for ref_seg, pred_seg in zip(ref, pred):
-            if len(ref_seg) == 0 : error = 1.0
-            else: error = wer(ref_seg, pred_seg)
-            if self.use_score: scores.append(1 - error)
-            else: use_score.append(error)
+            if len(ref_seg) == 0 :
+                error = 1.0
+            else:
+                error = wer(ref_seg, pred_seg)
+            if self.use_score:
+                scores.append(1 - error)
+            else:
+                scores.append(error)
         return np.array(scores)
     
 """
