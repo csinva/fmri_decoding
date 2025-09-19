@@ -35,7 +35,10 @@ if __name__ == "__main__":
         word_rate_voxels = "auditory"
 
     # load responses
-    hf = h5py.File(os.path.join(config.DATA_PATH_TO_DERIVATIVE, 'preprocessed_data', config.map_to_uts_subject(args.subject), args.task + ".hf5"), "r")
+    # hf = h5py.File(os.path.join(config.DATA_TEST_DIR, "test_response", args.subject, args.experiment, args.task + ".hf5"), "r")
+    hf = h5py.File(os.path.join(
+        config.DATA_PATH_TO_DERIVATIVE_DS004510, 'preprocessed_data',
+        config.map_to_uts_subject(args.subject), args.experiment, args.task + ".hf5"), "r")
     resp = np.nan_to_num(hf["data"][:])
     hf.close()
     

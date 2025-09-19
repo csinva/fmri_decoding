@@ -63,22 +63,27 @@ if __name__ == "__main__":
         for mname, metric in metrics.items():
 
             # get null score for each window and the entire story
+            print('get null score...')
             window_null_scores = np.array([metric.score(ref = ref_windows, pred = null_windows) 
                                            for null_windows in null_window_list])
             story_null_scores = window_null_scores.mean(1)
 
             # get raw score and normalized score for each window
+            print('get raw windowed score...')
             window_scores[(reference, mname)] = metric.score(ref = ref_windows, pred = pred_windows)
             window_zscores[(reference, mname)] = (window_scores[(reference, mname)] 
                                                   - window_null_scores.mean(0)) / window_null_scores.std(0)
 
             # get raw score and normalized score for the entire story
+            print('get raw story score...')
             story_scores[(reference, mname)] = metric.score(ref = ref_windows, pred = pred_windows)
             story_zscores[(reference, mname)] = (story_scores[(reference, mname)].mean()
                                                  - story_null_scores.mean()) / story_null_scores.std()
     
+    print('saving...')
     save_location = os.path.join(config.SCORE_DIR, args.subject, args.experiment)
     os.makedirs(save_location, exist_ok = True)
     np.savez(os.path.join(save_location, args.task), 
              window_scores = window_scores, window_zscores = window_zscores, 
              story_scores = story_scores, story_zscores = story_zscores)
+    print('done!')

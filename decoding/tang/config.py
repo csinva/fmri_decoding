@@ -2,8 +2,9 @@ import os
 from os.path import dirname
 import numpy as np
 
-# this is downloaded from openneuro
-DATA_PATH_TO_DERIVATIVE = '/home/chansingh/mntv1/deep-fMRI/data/ds003020/derivative/'
+# downloaded from openneuro
+DATA_PATH_TO_DERIVATIVE_DS003020 = '/home/chansingh/mntv1/deep-fMRI/data/ds003020/derivative/'
+DATA_PATH_TO_DERIVATIVE_DS004510 = '/home/chansingh/mntv1/fmri_decoding/ds004510/derivative/'
 
 # these three subfolders are downloaded from the links at https://github.com/HuthLab/semantic-decoding
 BIG_DATA_DIR = '/home/chansingh/mntv1/fmri_decoding'

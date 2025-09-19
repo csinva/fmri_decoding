@@ -7,7 +7,7 @@ from decoding.tang import config
 def get_resp(subject, stories, stack = True, vox = None):
     """loads response data
     """
-    subject_dir = os.path.join(config.DATA_PATH_TO_DERIVATIVE, 'preprocessed_data', config.map_to_uts_subject(subject))
+    subject_dir = os.path.join(config.DATA_PATH_TO_DERIVATIVE_DS003020, 'preprocessed_data', config.map_to_uts_subject(subject))
     resp = {}
     for story in stories:
         resp_path = os.path.join(subject_dir, "%s.hf5" % story)
