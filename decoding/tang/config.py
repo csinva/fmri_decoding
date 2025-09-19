@@ -3,20 +3,28 @@ from os.path import dirname
 import numpy as np
 
 # downloaded from openneuro
-DATA_PATH_TO_DERIVATIVE_DS003020 = '/home/chansingh/mntv1/deep-fMRI/data/ds003020/derivative/'
-DATA_PATH_TO_DERIVATIVE_DS004510 = '/home/chansingh/mntv1/fmri_decoding/ds004510/derivative/'
+REPO_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))
+DATA_PATH_TO_DERIVATIVE_DS003020 = os.path.join(REPO_DIR, 'ds003020', 'derivative')
+DATA_PATH_TO_DERIVATIVE_DS004510 = os.path.join(REPO_DIR, 'ds004510', 'derivative')
+# DATA_PATH_TO_DERIVATIVE_DS003020 = '/home/chansingh/mntv1/deep-fMRI/data/ds003020/derivative/'
+# DATA_PATH_TO_DERIVATIVE_DS004510 = '/home/chansingh/mntv1/fmri_decoding/ds004510/derivative/'
+
+
 
 # these three subfolders are downloaded from the links at https://github.com/HuthLab/semantic-decoding
-BIG_DATA_DIR = '/home/chansingh/mntv1/fmri_decoding'
+BIG_DATA_DIR = REPO_DIR
+# BIG_DATA_DIR = '/home/chansingh/mntv1/fmri_decoding'
 DATA_LM_DIR = os.path.join(BIG_DATA_DIR, "data_lm")
 DATA_TRAIN_DIR = os.path.join(BIG_DATA_DIR, "data_train")
 DATA_TEST_DIR = os.path.join(BIG_DATA_DIR, "data_test")
 # for e2e_baseline, additionally download "released" folder under BIG_DATA_DIR
 
-REPO_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))
+
 RESULT_DIR = os.path.join(REPO_DIR, "results")
 MODEL_DIR = os.path.join(RESULT_DIR, "models")
 SCORE_DIR = os.path.join(RESULT_DIR, "scores")
+
+
 
 # GPT encoding model parameters
 TRIM = 5

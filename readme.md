@@ -6,11 +6,12 @@ This repository contains code used in the paper "Semantic reconstruction of cont
 - install dependencies with `uv sync`
 - set up data
   - set paths in `decoding.tang.config.py` for where you want to download things and save results
-  - Download [language model data](https://utexas.box.com/shared/static/7ab8qm5e3i0vfsku0ee4dc6hzgeg7nyh.zip) and extract contents into `decoding.tang.config.DATA_LM_DIR`
-  - Download [training data](https://utexas.box.com/shared/static/3go1g4gcdar2cntjit2knz5jwr3mvxwe.zip) and extract contents into `decoding.tang.config.DATA_TRAIN_DIR`
-    - download stimulus data for `train_stimulus/` and response data for `train_response/[SUBJECT_ID]` from [OpenNeuro ds003020](https://openneuro.org/datasets/ds003020/). This should be specified in `decoding.tang.config.DATA_PATH_TO_DERIVATIVE_DS003020`
-  - Download [test data](https://utexas.box.com/shared/static/ae5u0t3sh4f46nvmrd3skniq0kk2t5uh.zip) and extract contents into `decoding.tang.config.DATA_TEST_DIR`
-    - download stimulus data for `test_stimulus/[EXPERIMENT]` and response data for `test_response/[SUBJECT_ID]` from [OpenNeuro ds004510](https://openneuro.org/datasets/ds004510/). This should be specified in `decoding.tang.config.DATA_PATH_TO_DERIVATIVE_DS004510`
+  - then run `uv run `experiments/tang/_download_data.py` to download all the data necessary in the right places. If this fails, download the data manually as follows:
+    - Download [language model data](https://utexas.box.com/shared/static/7ab8qm5e3i0vfsku0ee4dc6hzgeg7nyh.zip) and extract contents into `decoding.tang.config.DATA_LM_DIR`
+    - Download [training data](https://utexas.box.com/shared/static/3go1g4gcdar2cntjit2knz5jwr3mvxwe.zip) and extract contents into `decoding.tang.config.DATA_TRAIN_DIR`
+      - download stimulus data for `train_stimulus/` and response data for `train_response/[SUBJECT_ID]` from [OpenNeuro ds003020](https://openneuro.org/datasets/ds003020/). This should be specified in `decoding.tang.config.DATA_PATH_TO_DERIVATIVE_DS003020`
+    - Download [test data](https://utexas.box.com/shared/static/ae5u0t3sh4f46nvmrd3skniq0kk2t5uh.zip) and extract contents into `decoding.tang.config.DATA_TEST_DIR`
+      - download stimulus data for `test_stimulus/[EXPERIMENT]` and response data for `test_response/[SUBJECT_ID]` from [OpenNeuro ds004510](https://openneuro.org/datasets/ds004510/). This should be specified in `decoding.tang.config.DATA_PATH_TO_DERIVATIVE_DS004510`
 
 ## Running
 1. Estimate the encoding model. The encoding model predicts brain responses from contextual features of the stimulus extracted using GPT. The `--gpt` parameter determines the GPT checkpoint used. Use `--gpt imagined` when estimating models for imagined speech data, as this will extract features using a GPT checkpoint that was not trained on the imagined speech stories. Use `--gpt perceived` when estimating models for other data. The encoding model will be saved in `MODEL_DIR/[SUBJECT_ID]`. Alternatively, download [pre-fit encoding models](https://utexas.box.com/s/ri13t06iwpkyk17h8tfk0dtyva7qtqlz).
