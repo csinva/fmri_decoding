@@ -13,8 +13,8 @@ np.random.seed(42)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subject", type = str, required = True)
-    parser.add_argument("--gpt", type = str, default = "perceived")
+    parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
+    parser.add_argument("--gpt", type = str, default = "perceived", choices=['imagined', 'perceived'])
     parser.add_argument("--sessions", nargs = "+", type = int, 
         default = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 20])
     args = parser.parse_args()
@@ -33,9 +33,12 @@ if __name__ == "__main__":
     features = LMFeatures(model = gpt, layer = config.GPT_LAYER, context_words = config.GPT_WORDS)
     
     # estimate encoding model
+    print('load stimulus...')
     rstim, tr_stats, word_stats = get_stim(stories, features)
+    print('load response...')
     rresp = get_resp(args.subject, stories, stack = True)
     nchunks = int(np.ceil(rresp.shape[0] / 5 / config.CHUNKLEN))
+    print('estimate encoding model...')
     weights, alphas, bscorrs = bootstrap_ridge(rstim, rresp, use_corr = False, alphas = config.ALPHAS,
         nboots = config.NBOOTS, chunklen = config.CHUNKLEN, nchunks = nchunks)        
     bscorrs = bscorrs.mean(2).max(0)
@@ -43,6 +46,7 @@ if __name__ == "__main__":
     del rstim, rresp
     
     # estimate noise model
+    print('estimate noise model...')
     stim_dict = {story : get_stim([story], features, tr_stats = tr_stats) for story in stories}
     resp_dict = get_resp(args.subject, stories, stack = False, vox = vox)
     noise_model = np.zeros([len(vox), len(vox)])
@@ -56,8 +60,10 @@ if __name__ == "__main__":
     del stim_dict, resp_dict
     
     # save
+    print('save...')
     save_location = os.path.join(config.MODEL_DIR, args.subject)
     os.makedirs(save_location, exist_ok = True)
     np.savez(os.path.join(save_location, "encoding_model_%s" % args.gpt), 
         weights = weights, noise_model = noise_model, alphas = alphas, voxels = vox, stories = stories,
         tr_stats = np.array(tr_stats), word_stats = np.array(word_stats))
+    print('done!')

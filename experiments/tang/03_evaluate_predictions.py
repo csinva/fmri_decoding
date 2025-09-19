@@ -8,7 +8,7 @@ from decoding.tang.utils_eval import generate_null, load_transcript, windows, se
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subject", type = str, required = True)
+    parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
     parser.add_argument("--experiment", type = str, required = True)
     parser.add_argument("--task", type = str, required = True)
     parser.add_argument("--metrics", nargs = "+", type = str, default = ["WER", "BLEU", "METEOR", "BERT"])
