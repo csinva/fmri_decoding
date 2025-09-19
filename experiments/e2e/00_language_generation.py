@@ -1,11 +1,11 @@
-from decoding.config import get_config
-from data import FMRI_dataset
+from decoding.e2e.config import get_config, REPO_DIR
+from decoding.language_generation.data import FMRI_dataset
+from decoding.language_generation.model import Decoding_model
 import pickle
 import random
 import numpy as np
 import torch
 import json
-from model import Decoding_model 
 import os
 seed = 2021
 random.seed(seed)
@@ -15,8 +15,7 @@ torch.cuda.manual_seed_all(seed)
 
 if __name__ == '__main__':
     args = get_config()
-    print(args)
-    save_name = '../results/'
+    save_name = args['results_path']
     for key in args.keys():
         if key not in ['cuda']:
             save_name += key+'('+str(args[key])+')_'
@@ -37,7 +36,7 @@ if __name__ == '__main__':
         decoding_model = Decoding_model(args)
         dataset = dataset_class(input_dataset, args, tokenizer = decoding_model.tokenizer, decoding_model = decoding_model)
     elif 'Narratives' in args['task_name']:
-        u2s = json.load(open(f'../../dataset_info/u2s.json'))
+        u2s = json.load(open(os.path.join(REPO_DIR, 'dataset', 'dataset_info', 'u2s.json')))
         args['Narratives_stories'] = u2s[f'sub-{subject_name}']
         input_dataset = {}
         for story_name in args['Narratives_stories']:
@@ -64,7 +63,7 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(seed)
         dataset = dataset_class(input_dataset, args, tokenizer = decoding_model.tokenizer, decoding_model = decoding_model)
         lost_list_baseline = decoding_model.valid(dataset.test_dataset)
-        from post_hoc_evaluate import compare
+        from decoding.language_generation.post_hoc_evaluate import compare
         pairwise_list = [compare(np.array(loss_list[idx]), np.array(lost_list_baseline[idx])) for idx in range(len(lost_list_baseline))]
         print(f"pairwise accuracy:  {np.sum(pairwise_list)/len(lost_list_baseline):.4f}",)
     
