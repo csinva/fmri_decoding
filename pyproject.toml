@@ -143,6 +143,7 @@ dependencies = [
     "jiwer",
     "bert-score",
     "h5py>=3.14.0",
+    "datasets>=2.14.7",
 ]
 
 [build-system]

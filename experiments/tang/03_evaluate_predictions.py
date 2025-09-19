@@ -9,8 +9,8 @@ from decoding.tang.utils_eval import generate_null, load_transcript, windows, se
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
-    parser.add_argument("--experiment", type = str, required = True)
-    parser.add_argument("--task", type = str, required = True)
+    parser.add_argument("--experiment", type = str, default='perceived_speech')
+    parser.add_argument("--task", type = str, default='wheretheressmoke')
     parser.add_argument("--metrics", nargs = "+", type = str, default = ["WER", "BLEU", "METEOR", "BERT"])
     parser.add_argument("--references", nargs = "+", type = str, default = [])
     parser.add_argument("--null", type = int, default = 10)
@@ -38,10 +38,14 @@ if __name__ == "__main__":
     pred_words, pred_times = pred_data["words"], pred_data["times"]
 
     # generate null sequences
-    if args.experiment in ["imagined_speech"]: gpt_checkpoint = "imagined"
-    else: gpt_checkpoint = "perceived"
+    print('generating null sequences...')
+    if args.experiment in ["imagined_speech"]:
+        gpt_checkpoint = "imagined"
+    else:
+        gpt_checkpoint = "perceived"
     null_word_list = generate_null(pred_times, gpt_checkpoint, args.null)
         
+    print('scoring...')
     window_scores, window_zscores = {}, {}
     story_scores, story_zscores = {}, {}
     for reference in args.references:
@@ -73,7 +77,7 @@ if __name__ == "__main__":
             story_zscores[(reference, mname)] = (story_scores[(reference, mname)].mean()
                                                  - story_null_scores.mean()) / story_null_scores.std()
     
-    save_location = os.path.join(config.REPO_DIR, "scores", args.subject, args.experiment)
+    save_location = os.path.join(config.SCORE_DIR, args.subject, args.experiment)
     os.makedirs(save_location, exist_ok = True)
     np.savez(os.path.join(save_location, args.task), 
              window_scores = window_scores, window_zscores = window_zscores, 

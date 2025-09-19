@@ -26,13 +26,13 @@ uv run python experiments/tang/01_train_WR.py --subject S3
 6. Test the decoder on brain responses not used in model estimation. The decoder predictions will be saved in `RESULTS_DIR/[SUBJECT_ID]/[EXPERIMENT_NAME]`.
 
 ```bash
-uv run python experiments/tang/02_run_decoder.py --subject S3 --experiment [EXPERIMENT_NAME] --task [TASK_NAME]
+uv run python experiments/tang/02_run_decoder.py --subject S3
 ```
 
 7. Evaluate the decoder predictions against reference transcripts. The evaluation results will be saved in `SCORE_DIR/[SUBJECT_ID]/[EXPERIMENT_NAME]`.
 
 ```bash
-python3 decoding/evaluate_predictions.py --subject [SUBJECT_ID] --experiment [EXPERIMENT_NAME] --task [TASK_NAME]
+uv run python experiments/tang/03_evaluate_predictions.py --subject S3
 ```
 
 # E2E baseline

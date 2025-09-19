@@ -5,6 +5,7 @@ from decoding.tang.config import DATA_PATH_TO_DERIVATIVE
 from decoding.tang.utils_ridge.textgrid import TextGrid
 
 def load_textgrids(stories):
+    # base = join(data_dir, "train_stimulus")
     base = join(DATA_PATH_TO_DERIVATIVE, 'TextGrids')
     grids = {}
     for story in stories:
