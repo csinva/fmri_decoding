@@ -4,15 +4,15 @@ import json
 import argparse
 
 
-from decoding.tang.GPT import GPT
-from decoding.tang.StimulusModel import LMFeatures
-from decoding.tang.utils_stim import get_stim
-from decoding.tang.utils_resp import get_resp
-from decoding.tang.utils_ridge.ridge import ridge, bootstrap_ridge
-from decoding.tang import config
-from decoding.tang.utils_stim import get_story_wordseqs
-from decoding.tang.utils_ridge.DataSequence import DataSequence
-from decoding.tang.utils_ridge.util import make_delayed
+from decoding.GPT import GPT
+from decoding.StimulusModel import LMFeatures
+from decoding.utils_stim import get_stim
+from decoding.utils_resp import get_resp
+from decoding.utils_ridge.ridge import ridge, bootstrap_ridge
+from decoding import config
+from decoding.utils_stim import get_story_wordseqs
+from decoding.utils_ridge.DataSequence import DataSequence
+from decoding.utils_ridge.util import make_delayed
 np.random.seed(42)
 
 if __name__ == "__main__":

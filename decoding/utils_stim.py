@@ -2,11 +2,11 @@ import os
 import numpy as np
 import json
 
-from decoding.tang import config
-from decoding.tang.utils_ridge.stimulus_utils import TRFile, load_textgrids, load_simulated_trfiles
-from decoding.tang.utils_ridge.dsutils import make_word_ds
-from decoding.tang.utils_ridge.interpdata import lanczosinterp2D
-from decoding.tang.utils_ridge.util import make_delayed
+from decoding import config
+from decoding.utils_ridge.stimulus_utils import TRFile, load_textgrids, load_simulated_trfiles
+from decoding.utils_ridge.dsutils import make_word_ds
+from decoding.utils_ridge.interpdata import lanczosinterp2D
+from decoding.utils_ridge.util import make_delayed
 
 def get_story_wordseqs(stories):
     """loads words and word times of stimulus stories

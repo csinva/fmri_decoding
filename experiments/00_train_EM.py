@@ -3,12 +3,12 @@ import numpy as np
 import json
 import argparse
 
-from decoding.tang import config
-from decoding.tang.GPT import GPT
-from decoding.tang.StimulusModel import LMFeatures
-from decoding.tang.utils_stim import get_stim
-from decoding.tang.utils_resp import get_resp
-from decoding.tang.utils_ridge.ridge import ridge, bootstrap_ridge
+from decoding import config
+from decoding.GPT import GPT
+from decoding.StimulusModel import LMFeatures
+from decoding.utils_stim import get_stim
+from decoding.utils_resp import get_resp
+from decoding.utils_ridge.ridge import ridge, bootstrap_ridge
 np.random.seed(42)
 
 if __name__ == "__main__":

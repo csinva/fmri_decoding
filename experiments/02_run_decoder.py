@@ -7,13 +7,13 @@ from tqdm import tqdm
 import h5py
 from pathlib import Path
 
-from decoding.tang import config
-from decoding.tang.GPT import GPT
-from decoding.tang.Decoder import Decoder, Hypothesis
-from decoding.tang.LanguageModel import LanguageModel
-from decoding.tang.EncodingModel import EncodingModel
-from decoding.tang.StimulusModel import StimulusModel, get_lanczos_mat, affected_trs, LMFeatures
-from decoding.tang.utils_stim import predict_word_rate, predict_word_times
+from decoding import config
+from decoding.GPT import GPT
+from decoding.Decoder import Decoder, Hypothesis
+from decoding.LanguageModel import LanguageModel
+from decoding.EncodingModel import EncodingModel
+from decoding.StimulusModel import StimulusModel, get_lanczos_mat, affected_trs, LMFeatures
+from decoding.utils_stim import predict_word_rate, predict_word_times
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

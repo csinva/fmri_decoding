@@ -2,7 +2,7 @@
 from functools import reduce
 import numpy as np
 import logging
-from decoding.tang.utils_ridge.utils import mult_diag, counter
+from decoding.utils_ridge.utils import mult_diag, counter
 import random
 import itertools as itools
 

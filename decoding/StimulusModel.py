@@ -2,8 +2,8 @@ import numpy as np
 import torch
 torch.set_default_tensor_type(torch.FloatTensor)
 
-from decoding.tang import config
-from decoding.tang.utils_ridge.interpdata import lanczosfun
+from decoding import config
+from decoding.utils_ridge.interpdata import lanczosfun
 
 def get_lanczos_mat(oldtime, newtime, window = 3, cutoff_mult = 1.0, rectify = False):
     """get matrix for downsampling from TR times to word times

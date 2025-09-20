@@ -2,7 +2,7 @@ import os
 import numpy as np
 import h5py
 
-from decoding.tang import config
+from decoding import config
 
 def get_resp(subject, stories, stack = True, vox = None):
     """loads response data

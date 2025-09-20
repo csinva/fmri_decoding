@@ -1,8 +1,8 @@
 import os
 import numpy as np
 from os.path import join, dirname
-from decoding.tang.config import DATA_PATH_TO_DERIVATIVE_DS003020
-from decoding.tang.utils_ridge.textgrid import TextGrid
+from decoding.config import DATA_PATH_TO_DERIVATIVE_DS003020
+from decoding.utils_ridge.textgrid import TextGrid
 
 def load_textgrids(stories):
     # base = join(data_dir, "train_stimulus")

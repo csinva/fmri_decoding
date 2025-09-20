@@ -1,7 +1,7 @@
 import os
 import subprocess
 import zipfile
-from decoding.tang import config
+from decoding import config
 from datalad.api import install, get
 
 

@@ -3,8 +3,8 @@ import numpy as np
 import json
 import argparse
 
-from decoding.tang import config
-from decoding.tang.utils_eval import generate_null, load_transcript, windows, segment_data, WER, BLEU, METEOR, BERTSCORE
+from decoding import config
+from decoding.utils_eval import generate_null, load_transcript, windows, segment_data, WER, BLEU, METEOR, BERTSCORE
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

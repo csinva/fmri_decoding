@@ -4,16 +4,16 @@ import json
 
 from tqdm import tqdm
 
-from decoding.tang import config
-from decoding.tang.GPT import GPT
-from decoding.tang.Decoder import Decoder, Hypothesis
-from decoding.tang.LanguageModel import LanguageModel
+from decoding import config
+from decoding.GPT import GPT
+from decoding.Decoder import Decoder, Hypothesis
+from decoding.LanguageModel import LanguageModel
 
 from jiwer import wer
 from datasets import load_metric
 from bert_score import BERTScorer
-from decoding.tang.utils_ridge.textgrid import TextGrid
-from decoding.tang.config import DATA_PATH_TO_DERIVATIVE_DS004510
+from decoding.utils_ridge.textgrid import TextGrid
+from decoding.config import DATA_PATH_TO_DERIVATIVE_DS004510
 
 BAD_WORDS_PERCEIVED_SPEECH = frozenset(["sentence_start", "sentence_end", "br", "lg", "ls", "ns", "sp"])
 BAD_WORDS_OTHER_TASKS = frozenset(["", "sp", "uh"])
