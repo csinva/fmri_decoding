@@ -1,4 +1,4 @@
-from decoding.e2e.config import REPO_DIR
+from decoding.config import REPO_DIR
 from decoding.e2e.utils_eval import WER, BLEU, METEOR 
 import nltk
 import json

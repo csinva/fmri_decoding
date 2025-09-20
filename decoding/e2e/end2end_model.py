@@ -16,7 +16,7 @@ import sklearn
 import numpy as np
 from os.path import join
 from decoding.e2e.Decoder import Decoder, Hypothesis
-from decoding.e2e.config import model_name2path, model2hidden, BIG_DATA_DIR
+from decoding.config import model_name2path, model2hidden, BIG_DATA_DIR
 from decoding.language_generation.model_utils import Prompt_model
 from decoding.language_generation.model import Decoding_model
 from decoding.language_generation.top_model_utils import LanguageModel, Top_model, TokenLanguageModel

@@ -1,61 +1,19 @@
-# Tang semantic decoding
-
-This repository contains code used in the paper "Semantic reconstruction of continuous language from non-invasive brain recordings" by Jerry Tang, Amanda LeBel, Shailee Jain, and Alexander G. Huth.  
-
-## Setup
-- install dependencies with `uv sync`
-- set up data
-  - set paths in `decoding.tang.config.py` for where you want to download things and save results
-  - then run `uv run experiments/tang/_download_data.py` to download all the data necessary in the right places. If this fails, download the data manually as follows:
-    - Download [language model data](https://utexas.box.com/shared/static/7ab8qm5e3i0vfsku0ee4dc6hzgeg7nyh.zip) and extract contents into `decoding.tang.config.DATA_LM_DIR`
-    - Download [training data](https://utexas.box.com/shared/static/3go1g4gcdar2cntjit2knz5jwr3mvxwe.zip) and extract contents into `decoding.tang.config.DATA_TRAIN_DIR`
-      - download stimulus data for `train_stimulus/` and response data for `train_response/[SUBJECT_ID]` from [OpenNeuro ds003020](https://openneuro.org/datasets/ds003020/). This should be specified in `decoding.tang.config.DATA_PATH_TO_DERIVATIVE_DS003020`
-    - Download [test data](https://utexas.box.com/shared/static/ae5u0t3sh4f46nvmrd3skniq0kk2t5uh.zip) and extract contents into `decoding.tang.config.DATA_TEST_DIR`
-      - download stimulus data for `test_stimulus/[EXPERIMENT]` and response data for `test_response/[SUBJECT_ID]` from [OpenNeuro ds004510](https://openneuro.org/datasets/ds004510/). This should be specified in `decoding.tang.config.DATA_PATH_TO_DERIVATIVE_DS004510`
-
-## Running
-1. Estimate the encoding model. The encoding model predicts brain responses from contextual features of the stimulus extracted using GPT. The `--gpt` parameter determines the GPT checkpoint used. Use `--gpt imagined` when estimating models for imagined speech data, as this will extract features using a GPT checkpoint that was not trained on the imagined speech stories. Use `--gpt perceived` when estimating models for other data. The encoding model will be saved in `MODEL_DIR/[SUBJECT_ID]`. Alternatively, download [pre-fit encoding models](https://utexas.box.com/s/ri13t06iwpkyk17h8tfk0dtyva7qtqlz).
-
-```bash
-uv run python experiments/tang/00_train_EM.py --subject S3 --gpt perceived
-```
-
-2. Estimate the word rate model. The word rate model predicts word times from brain responses. Two word rate models will be saved in `MODEL_DIR/[SUBJECT_ID]`. The `word_rate_model_speech` model uses brain responses in speech regions, and should be used when decoding imagined speech and perceived movie data. The `word_rate_model_auditory` model uses brain responses in auditory cortex, and should be used when decoding perceived speech data. Alternatively, download [pre-fit word rate models](https://utexas.box.com/s/ri13t06iwpkyk17h8tfk0dtyva7qtqlz).
-
-```bash
-uv run python experiments/tang/01_train_WR.py --subject S3
-```
-
-3. Test the decoder on brain responses not used in model estimation. The decoder predictions will be saved in `RESULTS_DIR/[SUBJECT_ID]/[EXPERIMENT_NAME]`.
-
-```bash
-uv run python experiments/tang/02_run_decoder.py --subject S3
-```
-
-4. Evaluate the decoder predictions against reference transcripts. The evaluation results will be saved in `SCORE_DIR/[SUBJECT_ID]/[EXPERIMENT_NAME]`.
-
-```bash
-uv run python experiments/tang/03_evaluate_predictions.py --subject S3
-```
-
-# E2E baseline
-
 This is the official repo for our paper [Language Generation from Brain Recordings](https://arxiv.org/abs/2311.09889). Language generation from brain recordings is a novel approach that supports direct language generation with BCIs (brain-computer interfaces) without pre-defineng or pre-generating language candidates to select from.
 Code is taken from [Zenodo](https://zenodo.org/records/14838723).
 
 
-### Quick Start
+## Quick Start
 We have provided an example dataset to facilitate the replication of experiments. To run the example dataset, you can go into the sub-directory *language_generation/src* and use the following command:
 
 Install / setup with ```uv sync```
 
 ```bash
 # model training and evaluation (runing BrainLLM)
-uv run python experiments/e2e_baseline/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --dataset_path /home/chansingh/fmri_decoding/dataset/
+uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --dataset_path /home/chansingh/fmri_decoding/dataset/
 # control evaluation (runing PerBrainLLM)
-uv run python experiments/e2e_baseline/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method permutated --mode evaluate --output test_permutated --dataset_path /home/chansingh/fmri_decoding/dataset/
+uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method permutated --mode evaluate --output test_permutated --dataset_path /home/chansingh/fmri_decoding/dataset/
 # control evaluation (runing LLM)
-uv run python experiments/e2e_baseline/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method mask_input --mode evaluate --output test_nobrain --dataset_path /home/chansingh/fmri_decoding/dataset/
+uv run python experiments/00_language_generation.py --task_name Pereira_example --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path example --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --input_method mask_input --mode evaluate --output test_nobrain --dataset_path /home/chansingh/fmri_decoding/dataset/
 ```
 
 To run with the datasets utilized in our paper, please download the dataset from [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/d/04e8cfe6c9c743c69f08/) and unzip it.
@@ -63,8 +21,7 @@ To run with the datasets utilized in our paper, please download the dataset from
 - unpack the files via `gunzip *.gz` in each sub-directory.
 
 ```bash
-# same command as above except changed --task_name and --dataset_path
-uv run python experiments/e2e_baseline/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1 --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --pos True
+uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1 --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 10 --wandb none --mode all --pos True
 ``` 
 
 To evaluate the model performance, you can refer to the code in *language_generation/src/post_hoc_evaluate.py*
@@ -81,16 +38,16 @@ Here is a example that generate the human semantics while they are perceiving st
 
 ```bash
 # train BrainLLM with the spliting strategy that left out the story of "where there's smoke"
-uv run python experiments/e2e_baseline/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 0 --wandb none --mode all --pos True --data_spliting end2end
+uv run python experiments/00_language_generation.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --batch_size 8 --lr 1e-4 --pos False --pretrain_lr 1e-3 --pretrain_epochs 0 --wandb none --mode all --pos True --data_spliting end2end
 
-# fit model to predict word timings
-uv run python experiments/e2e_baseline/01_fit_encoding.py --task_name Huth_1 --checkpoint_path Huth_1_huth_encoding --wandb none --mode all --data_spliting end2end --model huth
+# run encoding models
+uv run python experiments/01_fit_wordrate.py --task_name Huth_1 --checkpoint_path Huth_1_huth_encoding --wandb none --mode all --data_spliting end2end --model huth
 
 # run inference for full story construction
-uv run python experiments/e2e_baseline/02_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
+uv run python experiments/02_e2e.py --task_name Huth_1 --cuda 0 --load_check_point False --model_name gpt2 --checkpoint_path Huth_1_gpt2_e2e --wandb none --mode evaluate --pos True --data_spliting end2end --mode end2end --use_bad_words_ids False --ncontext 10 --gcontext 10 --length_penalty 0.3 --beam_width 3 --extensions 3
 
 # run evaluation with Huth's metrics
-uv run python experiments/e2e_baseline/03_e2e_evaluate.py --dir Huth_1_gpt2_e2e
+uv run python experiments/03_e2e_evaluate.py --dir Huth_1_gpt2_e2e
 ``` 
 
 ### Model Training
@@ -149,7 +106,7 @@ To evaluate the model with different prompt input, i.e., BrainLLM, PerBrainLLM, 
 After that, you can get output files for different prompt inputs. Then, you can evaluate their performance by runing the python script *language_generation/src/post_hoc_evaluatoion.py* with the path of output files specified.
 Refer to *language_generation/src/post_hoc_evaluatoion.py* for example usage:
 ```bash
-uv run python decoding/language_generation/post_hoc_evaluate.py
+uv run python language_generation/src/post_hoc_evaluatoion.py
 ```
 
 ### Dataset

@@ -9,7 +9,7 @@ import os
 import json
 import copy
 from sklearn import svm
-from decoding.e2e.config import get_config, REPO_DIR
+from decoding.config import get_config, REPO_DIR
 from decoding.language_generation.data import FMRI_dataset
 from decoding.language_generation.model import Decoding_model
 seed = 2021
