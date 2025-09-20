@@ -89,7 +89,8 @@ class WER(object):
             if len(ref_seg) == 0 :
                 error = 1.0
             else:
-                error = wer(ref_seg, pred_seg)
+                # error = wer(ref_seg, pred_seg)
+                error = wer(" ".join(ref_seg), " ".join(pred_seg))
             if self.use_score:
                 scores.append(1 - error)
             else:
