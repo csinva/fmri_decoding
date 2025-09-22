@@ -37,13 +37,13 @@ def load_transcript(experiment, task):
     return transcript_data
 
 """windows of [duration] seconds at each time point"""
-def windows(start_time, end_time, duration, step = 1):
+def get_window_tuples_of_fixed_duration(start_time, end_time, duration, step = 1):
     start_time, end_time = int(start_time), int(end_time)
     half = int(duration / 2)
     return [(center - half, center + half) for center in range(start_time + half, end_time - half + 1) if center % step == 0]
 
 """divide [data] into list of segments defined by [cutoffs]"""
-def segment_data(data, times, cutoffs):
+def segment_into_word_lists_based_on_timing(data, times, cutoffs):
     return [[x for c, x in zip(times, data) if c >= start and c < end] for start, end in cutoffs]
 
 """generate null sequences with same times as predicted sequence"""

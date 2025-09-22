@@ -1,4 +1,9 @@
+from collections import defaultdict
+from copy import deepcopy
+import logging
 import os
+import random
+import joblib
 import numpy as np
 import json
 import argparse
@@ -6,6 +11,7 @@ import argparse
 from tqdm import tqdm
 import h5py
 from pathlib import Path
+import imodelsx.cache_save_utils
 
 from decoding import config
 from decoding.GPT import GPT
@@ -14,10 +20,10 @@ from decoding.LanguageModel import LanguageModel
 from decoding.EncodingModel import EncodingModel
 from decoding.StimulusModel import StimulusModel, get_lanczos_mat, affected_trs, LMFeatures
 from decoding.utils_stim import predict_word_rate, predict_word_times
-from decoding.utils_eval import generate_null, load_transcript, windows, segment_data, WER, BLEU, METEOR, BERTSCORE
+from decoding.utils_eval import generate_null, load_transcript, get_window_tuples_of_fixed_duration, segment_into_word_lists_based_on_timing, WER, BLEU, METEOR, BERTSCORE
 
 
-def decode(args):
+def decode(args, r):
     # determine GPT checkpoint based on experiment
     if args.experiment in ["imagined_speech"]:
         gpt_checkpoint = "imagined"
@@ -67,10 +73,16 @@ def decode(args):
         word_times, tr_times = predict_word_times(word_rate, resp, starttime = 0)
     lanczos_mat = get_lanczos_mat(word_times, tr_times)
 
+    if args.frac_to_decode < 1.0:
+        nwords = int(len(word_times) * args.frac_to_decode)
+        word_times = word_times[:nwords]
+        lanczos_mat = lanczos_mat[:nwords]
+
     # decode responses
     print('decoding...')
     decoder = Decoder(word_times, config.WIDTH)
     sm = StimulusModel(lanczos_mat, tr_stats, word_stats[0], device = config.SM_DEVICE)
+
     for sample_index in tqdm(range(len(word_times))):
         # identify TRs influenced by words in the range [start_index, end_index]
         trs = affected_trs(decoder.first_difference(), sample_index, lanczos_mat)
@@ -94,13 +106,18 @@ def decode(args):
     print('saving...')
     if args.experiment in ["perceived_movie", "perceived_multispeaker"]:
         decoder.word_times += 10
-    save_location = os.path.join(args.save_dir, args.subject, args.experiment)
-    os.makedirs(save_location, exist_ok = True)
-    decoder.save(os.path.join(save_location, args.task))
-    print('done!')
+    # save_location = os.path.join(args.save_dir, args.subject, args.experiment)
+    # os.makedirs(save_location, exist_ok = True)
+    r['decoded_words'] = np.array(decoder.beam[0].words)
+    r['decoded_word_times'] = np.array(decoder.word_times)
+    # np.savez(path, words = np.array(self.beam[0].words), times = np.array(self.word_times))
+    # r['']
+    # decoder.save(os.path.join(save_location, args.task))
+    # print('done!')
+    return r
 
 
-def evaluate(args):
+def evaluate(args, r):
     if len(args.references) == 0:
         args.references.append(args.task)
         
@@ -118,9 +135,10 @@ def evaluate(args):
         score = "recall")
 
     # load prediction transcript
-    pred_path = os.path.join(config.RESULT_DIR, args.subject, args.experiment, args.task + ".npz")
-    pred_data = np.load(pred_path)
-    pred_words, pred_times = pred_data["words"], pred_data["times"]
+    # pred_path = os.path.join(config.RESULT_DIR, args.subject, args.experiment, args.task + ".npz")
+    # pred_data = np.load(pred_path)
+    # pred_words, pred_times = pred_data["words"], pred_data["times"]
+    pred_words, pred_times = r['decoded_words'], r['decoded_word_times']
 
     # generate null sequences
     print('generating null sequences...')
@@ -133,60 +151,139 @@ def evaluate(args):
     print('scoring...')
     window_scores, window_zscores = {}, {}
     story_scores, story_zscores = {}, {}
-    for reference in args.references:
+    # for reference in args.references:
+    reference = args.references[0]
 
-        # load reference transcript
-        ref_data = load_transcript(args.experiment, reference)
-        ref_words, ref_times = ref_data["words"], ref_data["times"]
+    # load reference transcript
+    ref_data = load_transcript(args.experiment, reference)
+    ref_words, ref_times = ref_data["words"], ref_data["times"]
 
-        # segment prediction and reference words into windows
-        window_cutoffs = windows(*eval_segments[args.task], config.WINDOW)
-        ref_windows = segment_data(ref_words, ref_times, window_cutoffs)
-        pred_windows = segment_data(pred_words, pred_times, window_cutoffs)
-        null_window_list = [segment_data(null_words, pred_times, window_cutoffs) for null_words in null_word_list]
-        
-        for mname, metric in metrics.items():
+    # segment prediction and reference words into windows
+    start_time, end_time = eval_segments[args.task]
+    window_start_stop_tuples = get_window_tuples_of_fixed_duration(start_time, end_time, duration=config.WINDOW)
+    ref_windowed_word_lists = segment_into_word_lists_based_on_timing(ref_words, ref_times, window_start_stop_tuples)
+    pred_windowed_word_lists = segment_into_word_lists_based_on_timing(pred_words, pred_times, window_start_stop_tuples)
+    null_windowed_word_lists_list = [segment_into_word_lists_based_on_timing(null_words, pred_times, window_start_stop_tuples)
+                                        for null_words in null_word_list]
 
-            # get null score for each window and the entire story
-            print('get null score...')
-            window_null_scores = np.array([metric.score(ref = ref_windows, pred = null_windows) 
-                                           for null_windows in null_window_list])
-            story_null_scores = window_null_scores.mean(1)
-
-            # get raw score and normalized score for each window
-            print('get raw windowed score...')
-            window_scores[(reference, mname)] = metric.score(ref = ref_windows, pred = pred_windows)
-            window_zscores[(reference, mname)] = (window_scores[(reference, mname)] 
-                                                  - window_null_scores.mean(0)) / window_null_scores.std(0)
-
-            # get raw score and normalized score for the entire story
-            print('get raw story score...')
-            story_scores[(reference, mname)] = metric.score(ref = ref_windows, pred = pred_windows)
-            story_zscores[(reference, mname)] = (story_scores[(reference, mname)].mean()
-                                                 - story_null_scores.mean()) / story_null_scores.std()
+    # if decoding only a fraction of the data, cut off wherever there are no predicted words in the list
+    if args.frac_to_decode < 1.0:
+        idxs_nonempty_pred = [i for i, x in enumerate(pred_windowed_word_lists) if len(x) > 0]
+        ref_windowed_word_lists = [ref_windowed_word_lists[i] for i in idxs_nonempty_pred]
+        pred_windowed_word_lists = [pred_windowed_word_lists[i] for i in idxs_nonempty_pred]
+        null_windowed_word_lists_list = [[x[i] for i in idxs_nonempty_pred] for x in null_windowed_word_lists_list]
+    r['num_decoded_windows'] = len(pred_windowed_word_lists)
     
-    print('saving...')
-    save_dir = os.path.join(args.save_dir, args.subject, args.experiment, args.task, 'scores')
-    os.makedirs(save_dir, exist_ok = True)
-    np.savez(save_dir, 
-             window_scores = window_scores, window_zscores = window_zscores, 
-             story_scores = story_scores, story_zscores = story_zscores)
-    print('done!')
+    for metric_name, metric in metrics.items():
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+        # get null score for each window and the entire story
+        print('get null score...')
+        window_null_scores = np.array([metric.score(ref = ref_windowed_word_lists, pred = null_windows) 
+                                        for null_windows in null_windowed_word_lists_list])
+        story_null_scores = window_null_scores.mean(1)
+
+        # get raw score and normalized score for each window
+        print('get raw windowed score...')
+        r[f'{metric_name}_window_scores'] = metric.score(ref = ref_windowed_word_lists, pred = pred_windowed_word_lists)
+        r[f'{metric_name}_window_zscores'] = (r[f'{metric_name}_window_scores'] - window_null_scores.mean(0)) / window_null_scores.std(0)
+        r[f'{metric_name}_window_mean_score'] = r[f'{metric_name}_window_scores'].mean()
+
+        # get raw score and normalized score for the entire story
+        print('get raw story score...')
+        r[f'{metric_name}_story_scores'] = metric.score(ref = ref_windowed_word_lists, pred = pred_windowed_word_lists)
+        r[f'{metric_name}_story_zscores'] = (r[f'{metric_name}_story_scores'] - story_null_scores.mean()) / story_null_scores.std()
+        r[f'{metric_name}_story_mean_score'] = r[f'{metric_name}_story_scores'].mean()
+
+
+
+    # print('saving...')
+    # save_dir = os.path.join(args.save_dir, args.subject, args.experiment, args.task, 'scores')
+    # os.makedirs(save_dir, exist_ok = True)
+    # np.savez(save_dir, 
+            #  window_scores = window_scores, window_zscores = window_zscores, 
+            #  story_scores = story_scores, story_zscores = story_zscores)
+    # r['window_scores'] = window_scores
+    # r['window_zscores'] = window_zscores
+    # r['story_scores'] = story_scores
+    # r['story_zscores'] = story_zscores
+
+    # print('done!')
+    return r
+
+# initialize args
+def add_main_args(parser):
+    """Caching uses the non-default values from argparse to name the saving directory.
+    Changing the default arg an argument will break cache compatibility with previous runs.
+    """
     # shared args
     parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
     parser.add_argument("--experiment", type = str, default='perceived_speech')
     parser.add_argument("--task", type = str, default='wheretheressmoke')
-    parser.add_argument("--save_dir", type = str, default = config.RESULT_DIR)
+    parser.add_argument("--seed", type=int, default=1, help="random seed")
+    parser.add_argument("--save_dir", type = str, default = os.path.join(config.RESULT_DIR, 'decoding', 'test'))
+    parser.add_argument("--frac_to_decode", type = float, default = 1.0, help = "fraction of words to decode")
+    parser.add_argument("--use_test_setup", type = int, default = 1, help = "whether to use test setup (speeds things up)", choices = [0, 1])
 
     # evaluation args
     parser.add_argument("--metrics", nargs = "+", type = str, default = ["WER", "BLEU", "METEOR", "BERT"])
     parser.add_argument("--references", nargs = "+", type = str, default = [])
     parser.add_argument("--null", type = int, default = 10)
+    return parser
+
+def add_computational_args(parser):
+    """Arguments that only affect computation and not the results (shouldnt use when checking cache)"""
+    parser.add_argument(
+        "--use_cache",
+        type=int,
+        default=1,
+        choices=[0, 1],
+        help="whether to check for cache",
+    )
+    return parser
+
+if __name__ == "__main__":
+    # get args
+    parser = argparse.ArgumentParser()
+    parser_without_computational_args = add_main_args(parser)
+    parser = add_computational_args(deepcopy(parser_without_computational_args))
     args = parser.parse_args()
+
+    if args.use_test_setup:
+        args.frac_to_decode = 0.01
+        args.use_cache = 0
+
+    logger = logging.getLogger()
+    logging.basicConfig(level=logging.INFO)
+
+    # set up saving directory + check for cache
+    already_cached, save_dir_unique = imodelsx.cache_save_utils.get_save_dir_unique(
+        parser, parser_without_computational_args, args, args.save_dir
+    )
+
+    if args.use_cache and already_cached:
+        logging.info(f"cached version exists! Successfully skipping :)\n\n\n")
+        exit(0)
+    for k in sorted(vars(args)):
+        logger.info("\t" + k + " " + str(vars(args)[k]))
+    logging.info(f"\n\n\tsaving to " + save_dir_unique + "\n")
+
+    # set seed
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+
+    # set up saving dictionary + save params file
+    r = defaultdict(list)
+    r.update(vars(args))
+    r["git_commit_id"] = imodelsx.cache_save_utils.get_git_commit_id()
+    r["save_dir_unique"] = save_dir_unique
     
-    decode(args)
-    evaluate(args)
+    r = decode(args, r)
+    r = evaluate(args, r)
+
+    # save results
+    os.makedirs(save_dir_unique, exist_ok=True)
+    joblib.dump(
+        r, os.path.join(save_dir_unique, "results.pkl")
+    )  # caching requires that this is called results.pkl
+    logging.info(f"Succesfully completed with mean window bert-score of {r['BERT_window_mean_score']}\n\n")
     
