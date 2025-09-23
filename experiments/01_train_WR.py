@@ -4,8 +4,8 @@ import json
 import argparse
 
 
-from decoding.GPT import GPT
-from decoding.StimulusModel import LMFeatures
+from decoding.lm_wrapper import LMWrapper
+from decoding.stimulus_model import LMEmbeddingExtractor
 from decoding.utils_stim import get_stim
 from decoding.utils_resp import get_resp
 from decoding.utils_ridge.ridge import ridge, bootstrap_ridge

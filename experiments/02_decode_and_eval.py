@@ -14,11 +14,11 @@ from pathlib import Path
 import imodelsx.cache_save_utils
 
 from decoding import config
-from decoding.GPT import GPT
-from decoding.Decoder import Decoder, Hypothesis
-from decoding.LanguageModel import LanguageModel
-from decoding.EncodingModel import EncodingModel
-from decoding.StimulusModel import StimulusModel, get_lanczos_mat, affected_trs, LMFeatures
+from decoding.lm_wrapper import LMWrapper
+from decoding.decoder import Decoder, Hypothesis
+from decoding.lm_sampler import LMSampler
+from decoding.encoding_model import EncodingModel
+from decoding.stimulus_model import StimulusModel, get_lanczos_mat, affected_trs, LMEmbeddingExtractor
 from decoding.utils_stim import predict_word_rate, predict_word_times
 from decoding.utils_eval import generate_null, load_transcript, get_window_tuples_of_fixed_duration, segment_into_word_lists_based_on_timing, WER, BLEU, METEOR, BERTSCORE
 
@@ -49,9 +49,9 @@ def decode(args, r):
         gpt_vocab = json.load(f)
     with open(os.path.join(config.DATA_LM_DIR, "decoder_vocab.json"), "r") as f:
         decoder_vocab = json.load(f)
-    gpt = GPT(path = os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
-    features = LMFeatures(model = gpt, layer = config.GPT_LAYER, context_words = config.GPT_WORDS)
-    lm = LanguageModel(gpt, decoder_vocab, nuc_mass = config.LM_MASS, nuc_ratio = config.LM_RATIO)
+    lm_wrapper = LMWrapper(path = os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
+    features = LMEmbeddingExtractor(model = lm_wrapper, layer = args.model_layer, context_words = args.num_words_context)
+    lm_sampler = LMSampler(lm_wrapper, decoder_vocab, nuc_mass = args.lm_nuc_mass, nuc_ratio = config.LM_RATIO)
 
     # load models
     load_location = os.path.join(config.MODEL_DIR, args.subject)
@@ -91,7 +91,7 @@ def decode(args, r):
         ncontext = decoder.time_window(sample_index, config.LM_TIME, floor = 5)
 
         # get possible extension words for each hypothesis in the decoder beam
-        beam_word_logprob_pairs = lm.beam_propose(decoder.beam, ncontext)
+        beam_word_logprob_pairs = lm_sampler.beam_propose(decoder.beam, ncontext)
         for c, (hyp, nextensions) in enumerate(decoder.get_hypotheses()):
             nuc, logprobs = beam_word_logprob_pairs[c]
             if len(nuc) < 1: continue
@@ -118,21 +118,29 @@ def decode(args, r):
 
 
 def evaluate(args, r):
-    if len(args.references) == 0:
-        args.references.append(args.task)
+    # if len(args.references) == 0:
+        # args.references.append(args.task)
         
     with open(os.path.join(config.DATA_TEST_DIR, "eval_segments.json"), "r") as f:
         eval_segments = json.load(f)
                 
     # load language similarity metrics
-    metrics = {}
-    if "WER" in args.metrics: metrics["WER"] = WER(use_score = True)
-    if "BLEU" in args.metrics: metrics["BLEU"] = BLEU(n = 1)
-    if "METEOR" in args.metrics: metrics["METEOR"] = METEOR()
-    if "BERT" in args.metrics: metrics["BERT"] = BERTSCORE(
-        idf_sents = np.load(os.path.join(config.DATA_TEST_DIR, "idf_segments.npy")), 
-        rescale = False, 
-        score = "recall")
+    metrics = {
+        'WER': WER(use_score = True),
+        'BLEU': BLEU(n = 1),
+        'METEOR': METEOR(),
+        'BERT': BERTSCORE(
+            idf_sents = np.load(os.path.join(config.DATA_TEST_DIR, "idf_segments.npy")),
+            rescale = False,
+            score = "recall")
+    }
+    # if "WER" in args.metrics: metrics["WER"] = WER(use_score = True)
+    # if "BLEU" in args.metrics: metrics["BLEU"] = BLEU(n = 1)
+    # if "METEOR" in args.metrics: metrics["METEOR"] = METEOR()
+    # if "BERT" in args.metrics: metrics["BERT"] = BERTSCORE(
+    #     idf_sents = np.load(os.path.join(config.DATA_TEST_DIR, "idf_segments.npy")), 
+    #     rescale = False, 
+    #     score = "recall")
 
     # load prediction transcript
     # pred_path = os.path.join(config.RESULT_DIR, args.subject, args.experiment, args.task + ".npz")
@@ -146,16 +154,14 @@ def evaluate(args, r):
         gpt_checkpoint = "imagined"
     else:
         gpt_checkpoint = "perceived"
-    null_word_list = generate_null(pred_times, gpt_checkpoint, args.null)
-        
+    null_word_list = generate_null(pred_times, gpt_checkpoint, args.num_null, args)
+
     print('scoring...')
-    window_scores, window_zscores = {}, {}
-    story_scores, story_zscores = {}, {}
     # for reference in args.references:
-    reference = args.references[0]
+    # reference = args.task # args.references[0]
 
     # load reference transcript
-    ref_data = load_transcript(args.experiment, reference)
+    ref_data = load_transcript(args.experiment, args.task)
     ref_words, ref_times = ref_data["words"], ref_data["times"]
 
     # segment prediction and reference words into windows
@@ -181,6 +187,7 @@ def evaluate(args, r):
         window_null_scores = np.array([metric.score(ref = ref_windowed_word_lists, pred = null_windows) 
                                         for null_windows in null_windowed_word_lists_list])
         story_null_scores = window_null_scores.mean(1)
+        r[f'{metric_name}_null_window_mean_score'] = window_null_scores.mean()
 
         # get raw score and normalized score for each window
         print('get raw windowed score...')
@@ -193,21 +200,6 @@ def evaluate(args, r):
         r[f'{metric_name}_story_scores'] = metric.score(ref = ref_windowed_word_lists, pred = pred_windowed_word_lists)
         r[f'{metric_name}_story_zscores'] = (r[f'{metric_name}_story_scores'] - story_null_scores.mean()) / story_null_scores.std()
         r[f'{metric_name}_story_mean_score'] = r[f'{metric_name}_story_scores'].mean()
-
-
-
-    # print('saving...')
-    # save_dir = os.path.join(args.save_dir, args.subject, args.experiment, args.task, 'scores')
-    # os.makedirs(save_dir, exist_ok = True)
-    # np.savez(save_dir, 
-            #  window_scores = window_scores, window_zscores = window_zscores, 
-            #  story_scores = story_scores, story_zscores = story_zscores)
-    # r['window_scores'] = window_scores
-    # r['window_zscores'] = window_zscores
-    # r['story_scores'] = story_scores
-    # r['story_zscores'] = story_zscores
-
-    # print('done!')
     return r
 
 # initialize args
@@ -223,11 +215,19 @@ def add_main_args(parser):
     parser.add_argument("--save_dir", type = str, default = os.path.join(config.RESULT_DIR, 'decoding', 'test'))
     parser.add_argument("--frac_to_decode", type = float, default = 1.0, help = "fraction of words to decode")
     parser.add_argument("--use_test_setup", type = int, default = 1, help = "whether to use test setup (speeds things up)", choices = [0, 1])
+    
+
+    # decoder args
+    parser.add_argument("--model_checkpoint", type = str, default = 'gpt', help = "which model checkpoint to use")
+    parser.add_argument("--model_layer", type = int, default = 9, help = "which GPT layer to use")
+    parser.add_argument("--num_words_context", type = int, default = 5, help = "how many context words to use")
+    parser.add_argument("--lm_nuc_mass", type = float, default = 0.9,
+                        help = "nucleus sampling mass for LM decoder during beam search")
 
     # evaluation args
-    parser.add_argument("--metrics", nargs = "+", type = str, default = ["WER", "BLEU", "METEOR", "BERT"])
-    parser.add_argument("--references", nargs = "+", type = str, default = [])
-    parser.add_argument("--null", type = int, default = 10)
+    # parser.add_argument("--metrics", nargs = "+", type = str, default = ["WER", "BLEU", "METEOR", "BERT"])
+    # parser.add_argument("--references", nargs = "+", type = str, default = [])
+    parser.add_argument("--num_null", type = int, default = 10)
     return parser
 
 def add_computational_args(parser):

@@ -68,7 +68,7 @@ class StimulusModel():
             del_tr_variants = self._delay(tr_variants, n_variants, n_feats)
         return del_tr_variants[:, affected_trs, :].to('cpu')
             
-class LMFeatures():
+class LMEmbeddingExtractor():
     """class for extracting contextualized features of stimulus words
     """
     def __init__(self, model, layer, context_words):
@@ -79,14 +79,14 @@ class LMFeatures():
         """
         contexts = [extension[-(self.context_words+1):] for extension in extensions]
         if verbose: print(contexts)
-        context_array = self.model.get_context_array(contexts)
+        context_array = self.model.encode_texts_to_tensor(contexts)
         embs = self.model.get_hidden(context_array, layer = self.layer)
         return embs[:, len(contexts[0]) - 1]
 
     def make_stim(self, words):
         """outputs matrix of features corresponding to the stimulus words
         """
-        context_array = self.model.get_story_array(words, self.context_words)
+        context_array = self.model.encode_and_stack_running_segments_into_matrix(words, self.context_words)
         embs = self.model.get_hidden(context_array, layer = self.layer)
         return np.vstack([embs[0, :self.context_words], 
             embs[:context_array.shape[0] - self.context_words, self.context_words]])

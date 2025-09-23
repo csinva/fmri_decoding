@@ -5,9 +5,9 @@ import json
 from tqdm import tqdm
 
 from decoding import config
-from decoding.GPT import GPT
-from decoding.Decoder import Decoder, Hypothesis
-from decoding.LanguageModel import LanguageModel
+from decoding.lm_wrapper import LMWrapper
+from decoding.decoder import Decoder, Hypothesis
+from decoding.lm_sampler import LMSampler
 
 from jiwer import wer
 from datasets import load_metric
@@ -47,15 +47,15 @@ def segment_into_word_lists_based_on_timing(data, times, cutoffs):
     return [[x for c, x in zip(times, data) if c >= start and c < end] for start, end in cutoffs]
 
 """generate null sequences with same times as predicted sequence"""
-def generate_null(pred_times, gpt_checkpoint, n):
+def generate_null(pred_times, gpt_checkpoint, n, args):
     
     # load language model
     with open(os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "vocab.json"), "r") as f:
         gpt_vocab = json.load(f)
     with open(os.path.join(config.DATA_LM_DIR, "decoder_vocab.json"), "r") as f:
         decoder_vocab = json.load(f)
-    gpt = GPT(path = os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
-    lm = LanguageModel(gpt, decoder_vocab, nuc_mass = config.LM_MASS, nuc_ratio = config.LM_RATIO)
+    gpt = LMWrapper(path = os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
+    lm = LMSampler(gpt, decoder_vocab, nuc_mass = args.lm_nuc_mass, nuc_ratio = config.LM_RATIO)
     
     # generate null sequences
     null_words = []

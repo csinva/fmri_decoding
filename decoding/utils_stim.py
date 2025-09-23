@@ -18,11 +18,11 @@ def get_story_wordseqs(stories):
     wordseqs = make_word_ds(grids, trfiles)
     return wordseqs
 
-def get_stim(stories, features, tr_stats = None):
+def get_stim(stories, lm_embedding_extractor, tr_stats = None):
     """extract quantitative features of stimulus stories
     """
     word_seqs = get_story_wordseqs(stories)
-    word_vecs = {story : features.make_stim(word_seqs[story].data) for story in stories}
+    word_vecs = {story : lm_embedding_extractor.make_stim(word_seqs[story].data) for story in stories}
     word_mat = np.vstack([word_vecs[story] for story in stories])
     word_mean, word_std = word_mat.mean(0), word_mat.std(0)
     

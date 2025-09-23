@@ -31,18 +31,19 @@ def context_filter(proposals, context):
     cut_words.extend([x for x in proposals if x not in STOPWORDS and in_context(x, context)]) # unigrams
     return [x for x in proposals if x not in cut_words]
 
-class LanguageModel():
+class LMSampler():
     """class for generating word sequences using a language model
     """
     def __init__(self, model, vocab, nuc_mass = 1.0, nuc_ratio = 0.0):        
         self.model = model
         self.ids = {i for word, i in self.model.word2id.items() if word in set(vocab)}
-        self.nuc_mass, self.nuc_ratio = nuc_mass, nuc_ratio
+        self.nuc_mass = nuc_mass
+        self.nuc_ratio = nuc_ratio
         
     def ps(self, contexts):
         """get probability distributions over the next words for each context
         """
-        context_arr = self.model.get_context_array(contexts)
+        context_arr = self.model.encode_texts_to_tensor(contexts)
         probs = self.model.get_probs(context_arr)
         return probs[:, len(contexts[0]) - 1] 
     

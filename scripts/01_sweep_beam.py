@@ -5,8 +5,10 @@ repo_dir = dirname(dirname(os.path.abspath(__file__)))
 
 # List of values to sweep over (sweeps over all combinations of these)
 params_shared_dict = {
-    'save_dir': [join(repo_dir, 'results', 'sep22_sweep_beam')],
+    'save_dir': [join(repo_dir, 'results', 'sep22_sweep_lm_nuc_mass_full')],
     'use_test_setup': [0],
+    'lm_nuc_mass': [0.1, 0.25, 0.5, 0.75, 0.9, 0.95],
+    'frac_to_decode': [1.0],
 }
 
 # List of tuples to sweep over (these values are coupled, and swept over together)

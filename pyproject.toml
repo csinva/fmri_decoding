@@ -12,10 +12,12 @@ dependencies = [
     "datasets>=2.14.7",
     "git-annex>=10.20250828",
     "datalad>=1.2.1",
-    "imodelsx>=1.0.11",
     "transformers>=4.56.2",
     "huggingface-hub>=0.17.1",
     "nltk>=3.9.1",
+    "jupyter>=1.1.1",
+    "seaborn>=0.13.2",
+    "imodelsx",
 ]
 
 [build-system]
@@ -24,3 +26,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["decoding*"]
+
+[tool.uv.sources]
+imodelsx = { path = "../imodelsX", editable = true }
+amlt = { index = "msr" }
+
+[[tool.uv.index]]
+name = "msr"
+url = "https://msrpypi.azurewebsites.net/stable/leloojoo"
