@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--subject", type = str, default = 'S3', choices=['S1', 'S2', 'S3'])
     parser.add_argument("--sessions", nargs = "+", type = int, 
         default = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 20])
+    parser.add_argument("--save_dir", type = str, default = config.MODEL_DIR, help = "directory to save the model")
     args = parser.parse_args()
 
     # training stories
@@ -34,8 +35,7 @@ if __name__ == "__main__":
         vox = json.load(f)
             
     # estimate word rate model
-    save_location = os.path.join(config.MODEL_DIR, args.subject)
-    os.makedirs(save_location, exist_ok = True)
+    os.makedirs(args.save_dir, exist_ok = True)
     
     wordseqs = get_story_wordseqs(stories)
     rates = {}
@@ -54,5 +54,7 @@ if __name__ == "__main__":
         nchunks = int(np.ceil(delresp.shape[0] / 5 / config.CHUNKLEN))    
         weights, _, _ = bootstrap_ridge(delresp, rate, use_corr = False,
             alphas = config.ALPHAS, nboots = config.NBOOTS, chunklen = config.CHUNKLEN, nchunks = nchunks)
-        np.savez(os.path.join(save_location, "word_rate_model_%s" % roi), 
+        np.savez(os.path.join(args.save_dir, 
+                              f"{args.subject}___wordrate_model_{roi}"), 
             weights = weights, mean_rate = mean_rate, voxels = vox[roi])
+    print(f'done! saved to {args.save_dir}')

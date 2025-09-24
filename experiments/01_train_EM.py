@@ -20,9 +20,11 @@ if __name__ == "__main__":
     parser.add_argument("--gpt_perceived_or_imagined", type = str, default = "perceived", choices=['imagined', 'perceived'])
     parser.add_argument("--sessions", nargs = "+", type = int, 
         default = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 20])
-    parser.add_argument("--model_checkpoint", type = str, default = 'gpt', help = "which model checkpoint to use")
+    parser.add_argument("--model_checkpoint", type = str, default = 'gpt', help = "which model checkpoint to use",
+                        choices=['gpt', 'meta-llama/Meta-Llama-3-8B'])
     parser.add_argument("--model_layer", type = int, default = 9, help = "which GPT layer to use")
     parser.add_argument("--num_words_context", type = int, default = 5, help = "how many context words to use")
+    parser.add_argument("--save_dir", type = str, default = config.MODEL_DIR, help = "directory to save the model")
     args = parser.parse_args()
 
     # training stories
@@ -68,9 +70,9 @@ if __name__ == "__main__":
     
     # save
     print('save...')
-    save_location = os.path.join(config.MODEL_DIR, args.subject, args.model_checkpoint)
-    os.makedirs(save_location, exist_ok = True)
-    np.savez(os.path.join(save_location, f"encoding_model_{args.gpt_perceived_or_imagined}"), 
+    os.makedirs(args.save_dir, exist_ok = True)
+    np.savez(os.path.join(args.save_dir,
+                          f"{args.subject}___{args.model_checkpoint.replace('/', '_')}___encoding_model_{args.gpt_perceived_or_imagined}"), 
         weights = weights, noise_model = noise_model, alphas = alphas, voxels = vox, stories = stories,
         tr_stats = np.array(tr_stats), word_stats = np.array(word_stats), bscorrs=bscorrs)
-    print('done!')
+    print(f'done! saved to {args.save_dir}')

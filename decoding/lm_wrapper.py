@@ -25,6 +25,12 @@ class LMWrapper():
             self.model = AutoModelForCausalLM.from_pretrained(
                 "meta-llama/Meta-Llama-3-8B", dtype=torch.float16, device_map="auto").eval()
             self.tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+            self.word2id = self.tokenizer.get_vocab()
+            # self.vocab = self.tokenizer.get_vocab()
+            id_to_token = sorted(self.word2id.items(), key=lambda x: x[1])
+            self.vocab = [token for token, idx in id_to_token]
+            self.UNK_ID = 0
+            
 
     def encode(self, words):
         """map from words to ids
@@ -39,9 +45,9 @@ class LMWrapper():
         """
         num_context_words = context_words + 1
         story_ids = self.encode(words)
-        story_array = np.zeros([len(story_ids), num_context_words]) + self.UNK_ID
+        story_array = np.full(shape=(len(story_ids), num_context_words), fill_value=self.UNK_ID)
         for i in range(len(story_array)):
-            segment = story_ids[i:i+num_context_words]
+            segment = story_ids[i: i+num_context_words]
             story_array[i, :len(segment)] = segment
         return torch.tensor(story_array).long()
 
@@ -69,11 +75,16 @@ class LMWrapper():
         probs = softmax(outputs.logits, dim = 2).detach().cpu().numpy()
         return probs
 
-if __name__ == '__main__':
-    print('lets test the lm wrapper...')
-    lm_wrapper = LMWrapper(model_checkpoint='gpt', gpt_perceived_or_imagined='perceived', device = 'cuda')
+
+def test_lm_wrapper(lm_wrapper):
     test_words = ['the', 'cat', 'sat', 'on', 'the', 'mat']
     print('encode', lm_wrapper.encode(test_words))
+
+    print('get_voc', lm_wrapper.vocab[:10], len(lm_wrapper.vocab))
+
+    print('encode_and_stack_running_segments_into_matrix')
+    mat = lm_wrapper.encode_and_stack_running_segments_into_matrix(test_words, context_words=3)
+    print('mat shape', mat.shape, mat)
 
     print('get_hidden')
     hidden = lm_wrapper.get_hidden(lm_wrapper.encode_texts_to_tensor([test_words]), layer = 9)
@@ -83,16 +94,11 @@ if __name__ == '__main__':
     probs = lm_wrapper.get_probs(lm_wrapper.encode_texts_to_tensor([test_words[:-1]]))
     print('probs shape', probs.shape, probs, np.sum(probs), np.sum(probs[0, -1]))
 
-
-
+if __name__ == '__main__':
+    print('lets test the lm wrapper...')
+    lm_wrapper = LMWrapper(model_checkpoint='gpt', gpt_perceived_or_imagined='perceived', device = 'cuda')
+    test_lm_wrapper(lm_wrapper)
 
     print('now lets test llama...')
     lm_wrapper = LMWrapper(model_checkpoint='meta-llama/Meta-Llama-3-8B', gpt_perceived_or_imagined='perceived', device = 'cuda')
-    test_words = ['the', 'cat', 'sat', 'on', 'the', 'mat']
-    print('encode', lm_wrapper.encode(test_words))
-
-    print('get_hidden')
-    hidden = lm_wrapper.get_hidden(lm_wrapper.encode_texts_to_tensor([test_words]), layer = 9)
-    print('hidden shape', hidden.shape)
-    probs = lm_wrapper.get_probs(lm_wrapper.encode_texts_to_tensor([test_words[:-1]]))
-    print('probs shape', probs.shape, probs, np.sum(probs), np.sum(probs[0, -1]))
+    test_lm_wrapper(lm_wrapper)

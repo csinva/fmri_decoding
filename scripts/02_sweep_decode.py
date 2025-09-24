@@ -1,11 +1,12 @@
 from imodelsx import submit_utils
 from os.path import dirname, join, expanduser
 import os.path
+from decoding import config
 repo_dir = dirname(dirname(os.path.abspath(__file__)))
 
 # List of values to sweep over (sweeps over all combinations of these)
 params_shared_dict = {
-    'save_dir': [join(repo_dir, 'results', 'sep22_sweep_lm_nuc_mass_full')],
+    'save_dir': [join(config.RESULT_DIR, 'sep22_sweep_lm_nuc_mass_full')],
     'use_test_setup': [0],
     'lm_nuc_mass': [0.1, 0.25, 0.5, 0.75, 0.9, 0.95],
     'frac_to_decode': [1.0],
@@ -45,7 +46,8 @@ submit_utils.run_args_list(
 
     # by default loops over jobs in serial
     # n_cpus=8,  # Uncomment to parallelize over cpus
-    gpu_ids=[0, 1, 2, 3],  # Uncomment to run individual jobs over each gpu
+    # gpu_ids=[0, 1, 2, 3],  # Uncomment to run individual jobs over each gpu
+    gpu_ids=[1, 2, 3],  # Uncomment to run individual jobs over each gpu
     # gpu_ids=[0],  # Uncomment to run all jobs on a single gpu
     # gpu_ids=[[0, 1], [2, 3]], # Uncomment to run jobs on [0, 1] and [2, 3] gpus respectively
     # gpu_ids=[[0, 1, 2, 3]],  # Run job on all gpus together

@@ -24,12 +24,6 @@ from decoding.utils_eval import generate_null, load_transcript, get_window_tuple
 
 
 def decode(args, r):
-    # determine GPT checkpoint based on experiment
-    if args.experiment in ["imagined_speech"]:
-        gpt_checkpoint = "imagined"
-    else:
-        gpt_checkpoint = "perceived"
-
     # determine word rate model voxels based on experiment
     if args.experiment in ["imagined_speech", "perceived_movies"]:
         word_rate_voxels = "speech"
@@ -45,18 +39,25 @@ def decode(args, r):
     hf.close()
     
     # load gpt
-    with open(os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "vocab.json"), "r") as f:
+    with open(os.path.join(config.DATA_LM_DIR, args.gpt_perceived_or_imagined, "vocab.json"), "r") as f:
         gpt_vocab = json.load(f)
     with open(os.path.join(config.DATA_LM_DIR, "decoder_vocab.json"), "r") as f:
         decoder_vocab = json.load(f)
-    lm_wrapper = LMWrapper(path = os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
+    # lm_wrapper = LMWrapper(path = os.path.join(config.DATA_LM_DIR, args.gpt_perceived_or_imagined, "model"), vocab = gpt_vocab) #, device = config.GPT_DEVICE)
+    lm_wrapper = LMWrapper(
+        model_checkpoint=args.model_checkpoint,
+        gpt_perceived_or_imagined=args.gpt_perceived_or_imagined,
+    )
     features = LMEmbeddingExtractor(model = lm_wrapper, layer = args.model_layer, context_words = args.num_words_context)
     lm_sampler = LMSampler(lm_wrapper, decoder_vocab, nuc_mass = args.lm_nuc_mass, nuc_ratio = config.LM_RATIO)
 
     # load models
-    load_location = os.path.join(config.MODEL_DIR, args.subject)
-    word_rate_model = np.load(os.path.join(load_location, "word_rate_model_%s.npz" % word_rate_voxels), allow_pickle = True)
-    encoding_model = np.load(os.path.join(load_location, "encoding_model_%s.npz" % gpt_checkpoint))
+    # load_location = os.path.join(config.MODEL_DIR, args.subject)
+    load_model_dir = config.MODEL_DIR
+    word_rate_model = np.load(os.path.join(load_model_dir, f"{args.subject}___wordrate_model_{word_rate_voxels}.npz"), allow_pickle = True)
+    # encoding_model = np.load(os.path.join(load_model_dir, "encoding_model_%s.npz" % args.gpt_perceived_or_imagined))
+    encoding_model = np.load(os.path.join(load_model_dir, 
+        f"{args.subject}___{args.model_checkpoint.replace('/', '_')}___encoding_model_{args.gpt_perceived_or_imagined}.npz"))
     weights = encoding_model["weights"]
     noise_model = encoding_model["noise_model"]
     tr_stats = encoding_model["tr_stats"]
@@ -150,11 +151,7 @@ def evaluate(args, r):
 
     # generate null sequences
     print('generating null sequences...')
-    if args.experiment in ["imagined_speech"]:
-        gpt_checkpoint = "imagined"
-    else:
-        gpt_checkpoint = "perceived"
-    null_word_list = generate_null(pred_times, gpt_checkpoint, args.num_null, args)
+    null_word_list = generate_null(pred_times, args.gpt_perceived_or_imagined, args.num_null, args)
 
     print('scoring...')
     # for reference in args.references:
@@ -215,6 +212,7 @@ def add_main_args(parser):
     parser.add_argument("--save_dir", type = str, default = os.path.join(config.RESULT_DIR, 'decoding', 'test'))
     parser.add_argument("--frac_to_decode", type = float, default = 1.0, help = "fraction of words to decode")
     parser.add_argument("--use_test_setup", type = int, default = 1, help = "whether to use test setup (speeds things up)", choices = [0, 1])
+    parser.add_argument("--gpt_perceived_or_imagined", type = str, default = "perceived", choices=['imagined', 'perceived'])
     
 
     # decoder args
