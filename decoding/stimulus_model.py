@@ -77,11 +77,12 @@ class LMEmbeddingExtractor():
     def extend(self, extensions, verbose = False):
         """outputs array of vectors corresponding to the last words of each extension
         """
-        contexts = [extension[-(self.context_words+1):] for extension in extensions]
-        if verbose: print(contexts)
-        context_array = self.model.encode_texts_to_tensor(contexts)
+        context_list = [extension[-(self.context_words+1):] for extension in extensions]
+        if verbose:
+            print(context_list)
+        context_array = self.model.encode_texts_to_tensor(context_list)
         embs = self.model.get_hidden(context_array, layer = self.layer)
-        return embs[:, len(contexts[0]) - 1]
+        return embs[:, len(context_list[0]) - 1]
 
     def make_stim(self, words):
         """outputs matrix of features corresponding to the stimulus words

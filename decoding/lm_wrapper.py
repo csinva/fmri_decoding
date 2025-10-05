@@ -38,7 +38,8 @@ class LMWrapper():
         if self.model_checkpoint == 'gpt':
             return [self.word2id[x] if x in self.word2id else self.UNK_ID for x in words]
         else:
-            return self.tokenizer.convert_tokens_to_ids(words)
+            # return self.tokenizer.convert_tokens_to_ids(words)
+            return self.tokenizer(' '.join(words))['input_ids']
         
     def encode_and_stack_running_segments_into_matrix(self, words, context_words):
         """get word ids for each phrase in a stimulus story
@@ -51,10 +52,10 @@ class LMWrapper():
             story_array[i, :len(segment)] = segment
         return torch.tensor(story_array).long()
 
-    def encode_texts_to_tensor(self, texts: List[str]):
+    def encode_texts_to_tensor(self, contexts_list: List[str]):
         """get word ids for each context
         """
-        context_array = np.array([self.encode(words) for words in texts])
+        context_array = np.array([self.encode(words) for words in contexts_list])
         return torch.tensor(context_array).long()
 
     def get_hidden(self, ids, layer):
@@ -62,8 +63,11 @@ class LMWrapper():
         """
         mask = torch.ones(ids.shape).int()
         with torch.no_grad():
-            outputs = self.model(input_ids = ids.to(self.device), 
-                                 attention_mask = mask.to(self.device), output_hidden_states = True)
+            outputs = self.model(
+                input_ids = ids.to(self.device), 
+                attention_mask = mask.to(self.device),
+                output_hidden_states = True
+            )
         return outputs.hidden_states[layer].detach().cpu().numpy()
 
     def get_probs(self, ids):
