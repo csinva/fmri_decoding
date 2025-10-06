@@ -42,7 +42,7 @@ if __name__ == "__main__":
     lm_embedding_extractor = LMEmbeddingExtractor(model = lm_wrapper, layer = args.model_layer, context_words = args.num_words_context)
 
     # estimate encoding model
-    print('load stimulus...')
+    print('load and process stimulus...')
     rstim, tr_stats, word_stats = get_stim(stories, lm_embedding_extractor)
     print('load response...')
     rresp = get_resp(args.subject, stories, stack = True)
@@ -53,6 +53,7 @@ if __name__ == "__main__":
     bscorrs = bscorrs.mean(2).max(0)
     vox = np.sort(np.argsort(bscorrs)[-config.VOXELS:])
     del rstim, rresp
+    print('mean bscorrs', bscorrs.mean(), 'mean bscorrs of selected voxels', bscorrs[vox].mean())
     
     # estimate noise model
     print('estimate noise model...')

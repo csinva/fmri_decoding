@@ -43,8 +43,8 @@ class LMSampler():
     def ps(self, contexts):
         """get probability distributions over the next words for each context
         """
-        context_arr = self.model.encode_texts_to_tensor(contexts)
-        probs = self.model.get_probs(context_arr)
+        # ids, mask = self.model._encode_texts_to_tensor(contexts)
+        probs = self.model.get_probs(contexts)
         return probs[:, len(contexts[0]) - 1] 
     
     def beam_propose(self, beam, context_words):

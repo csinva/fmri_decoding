@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 import torch
 torch.set_default_tensor_type(torch.FloatTensor)
@@ -22,6 +23,15 @@ def affected_trs(start_index, end_index, lanczos_mat, delay = True):
     start_tr, end_tr = max(start_tr, 0), min(end_tr, lanczos_mat.shape[0] - 1)
     return np.arange(start_tr, end_tr + 1)
     
+def get_running_segments(words: List[str], num_context_words: int) -> List[List[str]]:
+    running_segments = []
+    for i in range(len(words)):
+        segment = words[max(0, i - num_context_words): i + 1]
+        if len(segment) < num_context_words + 1:
+            segment = (['<unk>'] * (num_context_words + 1 - len(segment))) + segment
+        running_segments.append(segment)
+    return running_segments
+
 class StimulusModel():
     """class for constructing stimulus features
     """
@@ -80,14 +90,12 @@ class LMEmbeddingExtractor():
         context_list = [extension[-(self.context_words+1):] for extension in extensions]
         if verbose:
             print(context_list)
-        context_array = self.model.encode_texts_to_tensor(context_list)
-        embs = self.model.get_hidden(context_array, layer = self.layer)
+        embs = self.model.get_hidden(context_list, layer=self.layer)
         return embs[:, len(context_list[0]) - 1]
 
     def make_stim(self, words):
         """outputs matrix of features corresponding to the stimulus words
         """
-        context_array = self.model.encode_and_stack_running_segments_into_matrix(words, self.context_words)
-        embs = self.model.get_hidden(context_array, layer = self.layer)
-        return np.vstack([embs[0, :self.context_words], 
-            embs[:context_array.shape[0] - self.context_words, self.context_words]])
+        running_segments_text_lists = get_running_segments(words, self.context_words)
+        embs = self.model.get_hidden(running_segments_text_lists, layer=self.layer)
+        return embs

@@ -8,8 +8,9 @@ repo_dir = dirname(dirname(os.path.abspath(__file__)))
 # List of values to sweep over (sweeps over all combinations of these)
 params_shared_dict = {
     # 'save_dir': [join(repo_dir, 'results', 'sep22_sweep_lm_nuc_mass_full')],
+    'save_dir': [join(repo_dir, 'results', 'oct6_enc_fit_llama')],
     'subject': ['S3'],
-    'model_checkpoint': ['meta-llama/Meta-Llama-3-8B'],
+    'model_checkpoint': ['meta-llama/Meta-Llama-3-8B', 'gpt'],
 }
 
 # List of tuples to sweep over (these values are coupled, and swept over together)
@@ -47,8 +48,8 @@ submit_utils.run_args_list(
     # by default loops over jobs in serial
     # n_cpus=8,  # Uncomment to parallelize over cpus
     # gpu_ids=[0, 1, 2, 3],  # Uncomment to run individual jobs over each gpu
-    gpu_ids=[0],  # Uncomment to run all jobs on a single gpu
-    # gpu_ids=[[0, 1], [2, 3]], # Uncomment to run jobs on [0, 1] and [2, 3] gpus respectively
+    # gpu_ids=[0],  # Uncomment to run all jobs on a single gpu
+    gpu_ids=[[0, 1], [2, 3]], # Uncomment to run jobs on [0, 1] and [2, 3] gpus respectively
     # gpu_ids=[[0, 1, 2, 3]],  # Run job on all gpus together
 
     # uncomment this to run jobs on cluster (need to run this script from the scripts directory)

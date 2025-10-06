@@ -2,6 +2,8 @@ import os
 import numpy as np
 import json
 
+from tqdm import tqdm
+
 from decoding import config
 from decoding.utils_ridge.stimulus_utils import TRFile, load_textgrids, load_simulated_trfiles
 from decoding.utils_ridge.dsutils import make_word_ds
@@ -22,7 +24,7 @@ def get_stim(stories, lm_embedding_extractor, tr_stats = None):
     """extract quantitative features of stimulus stories
     """
     word_seqs = get_story_wordseqs(stories)
-    word_vecs = {story : lm_embedding_extractor.make_stim(word_seqs[story].data) for story in stories}
+    word_vecs = {story : lm_embedding_extractor.make_stim(word_seqs[story].data) for story in tqdm(stories)}
     word_mat = np.vstack([word_vecs[story] for story in stories])
     word_mean, word_std = word_mat.mean(0), word_mat.std(0)
     
